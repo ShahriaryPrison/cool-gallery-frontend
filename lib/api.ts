@@ -14,10 +14,10 @@ import type { Product } from "./data";
 export const API_BASE =
   process.env.AVVAL_API_URL ||
   process.env.NEXT_PUBLIC_AVVAL_API_URL ||
-  "http://127.0.0.1:8080/api/v1";
+  "https://api.avval.app/api/v1";
 
 export const DEFAULT_STORE_SLUG =
-  process.env.NEXT_PUBLIC_STORE_SLUG || "cool-gallery";
+  process.env.NEXT_PUBLIC_STORE_SLUG || "cooolglry";
 
 export const API_KEY =
   process.env.AVVAL_API_KEY ||
