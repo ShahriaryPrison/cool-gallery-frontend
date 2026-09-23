@@ -3,11 +3,10 @@
 import { motion, type MotionValue, useScroll, useTransform, useSpring, useMotionValueEvent } from "motion/react";
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { getBestSellers } from "@/lib/data";
+import { getBestSellers, type Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 import { ArrowLeft } from "lucide-react";
 
-// همان پالت برند دسکتاپ (Theatrical Split-Screen) برای هویت بصری یکپارچه بین دو بریک‌پوینت
 const THEMES = [
   { accent: "#ff2d3c", glow: "rgba(255,45,60,0.32)" },
   { accent: "#3b82f6", glow: "rgba(59,130,246,0.28)" },
@@ -15,14 +14,18 @@ const THEMES = [
   { accent: "#10b981", glow: "rgba(16,185,129,0.28)" },
 ];
 
-const COUNTER = ["01", "02", "03", "04"];
+const COUNTER = ["01", "02", "03", "04", "05", "06", "07", "08"];
 
 function clamp(v: number, min: number, max: number) {
   return Math.min(max, Math.max(min, v));
 }
 
-export function ProductShowcase() {
-  const products = getBestSellers(4);
+export function ProductShowcase({
+  products: initialProducts,
+}: {
+  products?: Product[];
+}) {
+  const products = initialProducts && initialProducts.length > 0 ? initialProducts.slice(0, 4) : getBestSellers(4);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
 
@@ -40,7 +43,6 @@ export function ProductShowcase() {
     }
   });
 
-  // قفل مغناطیسی به همراه اسپرینگ سریع و نرم برای جلوگیری از تداخل محصولات در اسکرول سریع
   const steppedProgress = useTransform(scrollYProgress, (v) => {
     return Math.min(1, Math.max(0, Math.round(v / step) * step));
   });
@@ -61,7 +63,6 @@ export function ProductShowcase() {
       style={{ height: `${products.length * 90}vh` }}
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden bg-surface-0">
-        {/* پس‌زمینه‌های محو شونده هر محصول */}
         {products.map((_, i) => {
           const ranges = getFadeRanges(i, products.length, step);
           // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -80,24 +81,18 @@ export function ProductShowcase() {
           );
         })}
 
-        {/* نوارهای پرفوراسیون نوار فیلم — بالا و پایین */}
         <div className="pointer-events-none absolute top-0 left-0 right-0 h-5 film-strip-border z-30 opacity-40" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-5 film-strip-border z-30 opacity-40" />
 
-        {/* افکت اسکن‌لاین CRT */}
         <div className="pointer-events-none absolute inset-0 z-20 scanline-overlay opacity-20" />
-
-        {/* لرزش نور آپارات */}
         <div className="pointer-events-none absolute inset-0 z-20 animate-film-flicker opacity-[0.03] bg-white" />
 
-        {/* برچسب ثابت بالا */}
         <div className="absolute top-8 left-0 right-0 text-center z-20 px-6 pointer-events-none">
           <span className="cinematic-counter text-white/35 text-[10px] font-semibold tracking-[0.35em] uppercase">
             کالکشن ویژه
           </span>
         </div>
 
-        {/* نور نقطه‌ای متحرک پشت صحنه، هم‌رنگ محصول فعال */}
         <motion.div
           className="pointer-events-none absolute inset-x-0 top-0 h-[55%] z-0"
           animate={{
@@ -145,7 +140,7 @@ function ProductFrame({
   step,
   counter,
 }: {
-  product: ReturnType<typeof getBestSellers>[number];
+  product: Product;
   index: number;
   currentIdx: number;
   total: number;
@@ -153,15 +148,11 @@ function ProductFrame({
   step: number;
   counter: string;
 }) {
-  // ایزولاسیون رندر: فقط فریم فعلی و مجاور اجازه رندر دارند
   const isAdjacent = Math.abs(index - currentIdx) <= 1;
   const peak = index * step;
 
-  // فاصله نرمال‌شده نسبت به فریم فعال: -1 (قبل) .. 0 (فعال) .. 1 (بعد)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const dc = useTransform(progress, (v) => clamp((v - peak) / step, -1, 1));
-
-  // ترنزیشن پرده‌ای عمودی (Curtain Wipe) — سینماتیک و مناسب اسکرول لمسی
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const imgClip = useTransform(dc, (d) =>
     d <= 0 ? `inset(0% 0% ${-d * 100}% 0%)` : `inset(${d * 100}% 0% 0% 0%)`
@@ -182,7 +173,6 @@ function ProductFrame({
   return (
     <motion.div className="absolute inset-0 flex items-center justify-center w-full h-full z-10 pointer-events-none">
       <div className="pointer-events-auto flex flex-col items-center justify-start h-full w-full max-w-[1400px] mx-auto px-6 pt-32 pb-24 gap-2">
-        {/* واترمارک شماره فریم */}
         <motion.span
           style={{ opacity: textOpacity }}
           className="pointer-events-none absolute top-[14%] left-1/2 -translate-x-1/2 text-[26vw] font-black text-white/[0.05] select-none cinematic-counter z-0 leading-none"
@@ -190,13 +180,12 @@ function ProductFrame({
           {counter}
         </motion.span>
 
-        {/* تصویر محصول با ترنزیشن پرده‌ای */}
         <motion.div
           style={{ clipPath: imgClip, scale: imgScale }}
           className="relative w-full h-[40%] flex items-center justify-center shrink-0 origin-center z-10"
         >
           <Image
-            src={product.image}
+            src={product.image || "/products/fidget-dragon-black.png"}
             alt={product.name}
             fill
             className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]"
@@ -208,7 +197,6 @@ function ProductFrame({
           )}
         </motion.div>
 
-        {/* محتوای متنی - با افکت آبشاری */}
         <div className="w-full h-[60%] flex flex-col justify-start text-center pb-4 overflow-visible z-10">
           <motion.div style={{ y: titleY, opacity: textOpacity }}>
             <span className="cinematic-counter inline-flex items-center gap-2 text-white/40 text-[10px] tracking-[0.25em] uppercase mb-2">

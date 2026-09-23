@@ -12,7 +12,8 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getBestSellers } from "@/lib/data";
+import { getBestSellers, type Product } from "@/lib/data";
+import { formatToman } from "@/lib/format";
 
 const THEMES = [
   { accent: "#ff2d3c", glow: "rgba(255,45,60,0.35)" },
@@ -23,9 +24,13 @@ const THEMES = [
 
 const COUNTER = ["01", "02", "03", "04"];
 
-export function DesktopWheelShowcase() {
+export function DesktopWheelShowcase({
+  products: initialProducts,
+}: {
+  products?: Product[];
+}) {
   const [active, setActive] = useState(0);
-  const products = getBestSellers(4);
+  const products = initialProducts && initialProducts.length > 0 ? initialProducts.slice(0, 4) : getBestSellers(4);
   const containerRef = useRef<HTMLElement>(null);
 
   const mouseX = useMotionValue(0);
@@ -38,8 +43,10 @@ export function DesktopWheelShowcase() {
     offset: ["start start", "end end"],
   });
 
+  const maxIdx = Math.max(0, products.length - 1);
+
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const newActive = Math.min(3, Math.max(0, Math.round(latest * 3)));
+    const newActive = Math.min(maxIdx, Math.max(0, Math.round(latest * maxIdx)));
     if (newActive !== active) setActive(newActive);
   });
 
@@ -124,7 +131,7 @@ export function DesktopWheelShowcase() {
                   style={{ x: springX, y: springY }}
                 >
                   <Image
-                    src={products[active]?.image ?? ""}
+                    src={products[active]?.image ?? "/products/fidget-dragon-black.png"}
                     alt={products[active]?.name ?? ""}
                     fill
                     priority
@@ -191,6 +198,19 @@ export function DesktopWheelShowcase() {
                 {products[active]?.description}
               </motion.p>
             </AnimatePresence>
+
+            {/* Price & Specs */}
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-3xl font-black text-white">
+                {formatToman(products[active]?.price ?? 0)}
+              </span>
+              <span className="text-sm text-white/50">تومان</span>
+              {products[active]?.oldPrice && (
+                <span className="text-sm text-white/30 line-through mr-2">
+                  {formatToman(products[active].oldPrice)}
+                </span>
+              )}
+            </div>
 
             {/* Specs pills */}
             <AnimatePresence mode="wait">

@@ -4,14 +4,18 @@ import { motion, useScroll, useTransform, useSpring, type MotionValue } from "mo
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getBestSellers } from "@/lib/data";
+import { getBestSellers, type Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 import { ArrowLeft } from "lucide-react";
 
-const COUNTER = ["01", "02", "03", "04"];
+const COUNTER = ["01", "02", "03", "04", "05", "06", "07", "08"];
 
-export function StickyCardsShowcase() {
-  const allProducts = getBestSellers(8);
+export function StickyCardsShowcase({
+  products: initialProducts,
+}: {
+  products?: Product[];
+}) {
+  const allProducts = initialProducts && initialProducts.length > 0 ? initialProducts : getBestSellers(8);
   const products = allProducts.length > 4 ? allProducts.slice(4, 8) : allProducts;
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -22,8 +26,6 @@ export function StickyCardsShowcase() {
     offset: ["start start", "end end"],
   });
 
-  // اندازه‌گیری واقعی عرض ریل بر حسب پیکسل — استفاده از درصد اینجا باگ‌زا بود،
-  // چون translateX(%) نسبت به عرض خودِ ریل (مجموع همه کارت‌ها) محاسبه می‌شود نه یک کارت.
   useEffect(() => {
     function measure() {
       if (!trackRef.current) return;
@@ -55,12 +57,8 @@ export function StickyCardsShowcase() {
         style={{ height: `${products.length * 100}vh` }}
         className="relative"
       >
-        {/* dir="ltr" روی همین والدِ flex باید باشد، نه روی ریل — این والد است که به‌عنوان
-            یک فرزند flex (خودِ ریل) را لنگر می‌کند. در RTL، لنگر پیش‌فرض به راست است، پس
-            فرزندِ عریض‌تر از container به‌طور خودکار (پیش از هر اسکرولی) به چپ overflow
-            می‌کند و با translateX محاسبه‌شده جمع می‌شود — دقیقاً همان باگِ «خروج از کادر». */}
         <div dir="ltr" className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center bg-surface-0">
-          {/* نوار وضعیت مینیمال — جایگزین حاشیه‌های پرفوراسیون فیلم */}
+          {/* نوار وضعیت مینیمال */}
           <div dir="rtl" className="absolute top-8 left-6 right-6 lg:top-12 lg:left-16 lg:right-16 z-30 flex items-center gap-5">
             <span className="text-xs text-white/40 tracking-[0.2em] shrink-0">
               {COUNTER[0]} — {COUNTER[products.length - 1] ?? String(products.length).padStart(2, "0")}
@@ -103,7 +101,7 @@ function RunwayCard({
   total,
   counter,
 }: {
-  product: ReturnType<typeof getBestSellers>[number];
+  product: Product;
   index: number;
   progress: MotionValue<number>;
   total: number;
@@ -116,7 +114,7 @@ function RunwayCard({
 
   const rotateY = useTransform(progress, (v) => {
     const d = v - peak;
-    return d * -18; // درجه — ملایم‌تر از قبل برای حس فاخرتر
+    return d * -18;
   });
 
   const scale = useTransform(dist, [0, 0.3, 1], [1, 0.9, 0.82]);
@@ -132,11 +130,10 @@ function RunwayCard({
         transformStyle: "preserve-3d",
       }}
     >
-      {/* تصویر محصول — فضای منفی سخاوتمندانه، بدون فریم/بج سنگین */}
       <div className="relative w-full aspect-[4/5] mb-6">
         <div className="absolute inset-0 rounded-full blur-[70px] opacity-[0.12] bg-brand" />
         <Image
-          src={product.image}
+          src={product.image || "/products/fidget-dragon-black.png"}
           alt={product.name}
           fill
           className="object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.55)] p-4"
@@ -148,7 +145,6 @@ function RunwayCard({
         )}
       </div>
 
-      {/* محتوا — تایپوگرافی سطر باز، مینیمال */}
       <div className="relative">
         <span className="text-white/35 text-[11px] tracking-[0.2em] block mb-2">
           N.{counter} — {product.cat}

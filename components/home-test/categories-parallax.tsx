@@ -3,17 +3,28 @@
 import { motion, type Variants } from "motion/react";
 import { Gem, Link as LinkIcon, Target, Sparkles, Star, Aperture, KeyRound, Gift, ChevronLeft } from "lucide-react";
 
-// داده‌های دقیقاً مشابه تصویر ارسالی
-const CATEGORY_DATA = [
-  { title: "گردنبند", subtitle: "استیل ۳۱۶ و گوتیک", icon: Gem },
-  { title: "دستبند", subtitle: "کارتیر و کوبایی", icon: LinkIcon },
-  { title: "انگشتر", subtitle: "اسکلت و نگین‌دار", icon: Target },
-  { title: "گوشواره", subtitle: "طرح‌های خاص و دا...", icon: Sparkles },
-  { title: "پیرسینگ", subtitle: "ضدحساسیت و مین...", icon: Star },
-  { title: "فیجت", subtitle: "مفصلی و ضد استر...", icon: Aperture },
-  { title: "جاکلیدی", subtitle: "فلزی و چرم طبیعی", icon: KeyRound },
-  { title: "ست هدیه", subtitle: "بسته‌بندی اختصاصی", icon: Gift },
+// داده‌های پیش‌فرض
+const DEFAULT_CATEGORY_DATA = [
+  { title: "گردنبند", subtitle: "استیل ۳۱۶ و گوتیک", icon: Gem, slug: "necklaces" },
+  { title: "دستبند", subtitle: "کارتیر و کوبایی", icon: LinkIcon, slug: "bracelets" },
+  { title: "انگشتر", subtitle: "اسکلت و نگین‌دار", icon: Target, slug: "rings" },
+  { title: "گوشواره", subtitle: "طرح‌های خاص و دارک", icon: Sparkles, slug: "earrings" },
+  { title: "پیرسینگ", subtitle: "ضدحساسیت و مینیمال", icon: Star, slug: "piercings" },
+  { title: "فیجت", subtitle: "مفصلی و ضد استرس", icon: Aperture, slug: "fidgets" },
+  { title: "جاکلیدی", subtitle: "فلزی و چرم طبیعی", icon: KeyRound, slug: "keychains" },
+  { title: "ست هدیه", subtitle: "بسته‌بندی اختصاصی", icon: Gift, slug: "gift-sets" },
 ];
+
+const ICON_MAP: Record<string, any> = {
+  گردنبند: Gem,
+  دستبند: LinkIcon,
+  انگشتر: Target,
+  گوشواره: Sparkles,
+  پیرسینگ: Star,
+  فیجت: Aperture,
+  جاکلیدی: KeyRound,
+  "ست هدیه": Gift,
+};
 
 // تنظیمات انیمیشن کانتینر (برای ایجاد تاخیر زنجیره‌ای)
 const containerVariants: Variants = {
@@ -37,7 +48,22 @@ const itemVariants: Variants = {
   },
 };
 
-export function CategoriesParallax() {
+export function CategoriesParallax({
+  categories,
+}: {
+  categories?: { id: number; name: string; slug: string }[];
+}) {
+  const displayCategories = categories && categories.length > 0
+    ? categories.map((c) => {
+        const found = DEFAULT_CATEGORY_DATA.find((d) => d.title === c.name || d.slug === c.slug);
+        return {
+          title: c.name,
+          subtitle: found?.subtitle || "کالکشن دست‌چین و خاص",
+          icon: ICON_MAP[c.name] || found?.icon || Gem,
+          slug: c.slug,
+        };
+      })
+    : DEFAULT_CATEGORY_DATA;
   return (
     <section className="relative py-24 lg:py-32 px-6 lg:px-12 bg-surface-0 z-20">
       <div className="max-w-[1200px] mx-auto">
@@ -69,7 +95,7 @@ export function CategoriesParallax() {
           viewport={{ once: true, amount: 0.1 }}
           className="grid grid-cols-2 gap-2.5 sm:gap-3.5 lg:grid-cols-4 lg:gap-5"
         >
-          {CATEGORY_DATA.map((cat, i) => {
+          {displayCategories.map((cat, i) => {
             const Icon = cat.icon;
             return (
               <motion.a
