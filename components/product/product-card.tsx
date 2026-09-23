@@ -19,19 +19,19 @@ export function ProductCard({ product }: { product: Product }) {
         whileTap={{ scale: 0.97 }}
         whileHover={{ y: -4 }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
-        className="glass group flex h-full flex-col overflow-hidden rounded-3xl"
+        className="glass group flex h-full flex-col overflow-hidden rounded-[26px] p-2 hover:border-brand/40 transition-colors"
       >
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#09090c]">
           <ProductImage
             image={product.image}
             alt={product.name}
             category={product.cat}
-            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 rounded-2xl"
             iconClassName="size-14"
           />
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
           {product.badge && (
-            <span className="glass-brand absolute top-2.5 right-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white">
+            <span className="glass-brand absolute top-2.5 right-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
               {product.badge}
             </span>
           )}

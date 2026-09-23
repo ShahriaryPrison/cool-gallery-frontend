@@ -114,6 +114,7 @@ export interface ProductSummary {
   slug: string;
   status: string;
   description: string | null;
+  product_category_id?: number | null;
   default_variant: ProductVariant | null;
   images: MediaImage[];
   category?: {
@@ -128,6 +129,7 @@ export interface ProductDetail {
   name: string;
   slug: string;
   description: string | null;
+  product_category_id?: number | null;
   images: MediaImage[];
   options: ProductOption[];
   variants: ProductVariant[];

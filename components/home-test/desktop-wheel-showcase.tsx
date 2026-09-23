@@ -127,7 +127,7 @@ export function DesktopWheelShowcase({
                 />
 
                 <motion.div
-                  className="relative w-[380px] h-[380px] xl:w-[440px] xl:h-[440px]"
+                  className="relative w-[380px] h-[380px] xl:w-[440px] xl:h-[440px] rounded-[32px] overflow-hidden border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] bg-[#09090c]"
                   style={{ x: springX, y: springY }}
                 >
                   <Image
@@ -135,7 +135,8 @@ export function DesktopWheelShowcase({
                     alt={products[active]?.name ?? ""}
                     fill
                     priority
-                    className="object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.8)]"
+                    sizes="(min-width: 1280px) 440px, 380px"
+                    className="object-cover rounded-[32px] transition-transform duration-500 hover:scale-105"
                   />
                 </motion.div>
               </motion.div>

@@ -96,20 +96,20 @@ export function ShopView({
       </motion.div>
 
       {/* Live Search Input */}
-      <div className="px-5 pb-3 lg:px-12">
-        <div className="glass flex items-center gap-2.5 rounded-2xl px-3.5 py-3 border border-white/8 focus-within:border-brand/40 transition-colors">
+      <div className="px-5 pb-4 max-w-5xl mx-auto">
+        <div className="glass flex items-center gap-2.5 rounded-2xl px-4 py-3 border border-white/8 focus-within:border-brand/40 transition-colors">
           <Search className="text-ink-4 size-[17px] shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="جست‌وجوی محصول (مثلاً اژدها، گردنبند، جاکارتی...)"
-            className="text-ink-1 placeholder:text-ink-4 flex-1 bg-transparent text-[13.5px] outline-none"
+            placeholder="جست‌وجوی محصول (مثلاً انگشتر، کلاه، دستبند، پاد...)"
+            className="text-ink-1 placeholder:text-ink-4 flex-1 bg-transparent text-[13.5px] outline-none font-[family-name:var(--font-sans)]"
           />
         </div>
       </div>
 
       {/* Category Pills Slider */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-3 lg:flex-wrap lg:justify-center lg:px-12">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-4 max-w-5xl mx-auto lg:flex-wrap lg:justify-center">
         {availableCategories.map((c) => {
           const active = cat === c;
           return (
@@ -120,7 +120,7 @@ export function ShopView({
               whileTap={{ scale: 0.94 }}
               transition={{ type: "spring", stiffness: 500, damping: 28 }}
               className={cn(
-                "relative shrink-0 rounded-full px-4 py-2.5 text-[12.5px] font-bold whitespace-nowrap transition-colors",
+                "relative shrink-0 rounded-full px-4 py-2 text-[12.5px] font-bold whitespace-nowrap transition-colors",
                 active ? "text-white" : "glass text-ink-3 hover:text-white"
               )}
             >
@@ -138,36 +138,38 @@ export function ShopView({
       </div>
 
       {/* Sort & Filter Controls */}
-      <div className="flex items-center gap-2 px-5 pb-4 lg:px-12">
-        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-          <SelectTrigger className="glass !h-auto flex-1 rounded-2xl border-transparent px-4 py-3 text-[12.5px]">
-            <SelectValue>
-              {(value: SortKey) => SORTS.find((s) => s.key === value)?.label}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="glass-panel rounded-2xl">
-            {SORTS.map((s) => (
-              <SelectItem key={s.key} value={s.key} className="rounded-xl text-[12.5px]">
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
+      <div className="flex items-center justify-between gap-3 px-5 pb-5 max-w-5xl mx-auto">
         <motion.button
           type="button"
           onClick={() => setFiltersOpen((v) => !v)}
           whileTap={{ scale: 0.94 }}
           transition={{ type: "spring", stiffness: 500, damping: 28 }}
           className={cn(
-            "flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-[12.5px] font-bold text-white transition-all",
+            "flex shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-[12.5px] font-bold text-white transition-all",
             activeFilters ? "glass-brand shadow-[0_0_16px_rgba(255,45,60,0.25)]" : "glass"
           )}
         >
           <SlidersHorizontal className="size-[15px]" strokeWidth={2.2} />
-          <span>فیلتر</span>
+          <span>فیلترها</span>
           {activeFilters && <span className="bg-brand size-1.5 rounded-full" />}
         </motion.button>
+
+        <div className="w-[150px] sm:w-[180px]">
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger className="glass !h-auto w-full rounded-2xl border-transparent px-3.5 py-2.5 text-[12.5px]">
+              <SelectValue>
+                {(value: SortKey) => SORTS.find((s) => s.key === value)?.label}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="glass-panel rounded-2xl">
+              {SORTS.map((s) => (
+                <SelectItem key={s.key} value={s.key} className="rounded-xl text-[12.5px]">
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Filter Drawer / Expandable Area */}

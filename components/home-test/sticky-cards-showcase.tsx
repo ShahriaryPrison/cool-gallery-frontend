@@ -130,16 +130,17 @@ function RunwayCard({
         transformStyle: "preserve-3d",
       }}
     >
-      <div className="relative w-full aspect-[4/5] mb-6">
+      <div className="relative w-full aspect-[4/5] mb-6 rounded-[32px] overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] bg-[#09090c]">
         <div className="absolute inset-0 rounded-full blur-[70px] opacity-[0.12] bg-brand" />
         <Image
           src={product.image || "/products/fidget-dragon-black.png"}
           alt={product.name}
           fill
-          className="object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.55)] p-4"
+          sizes="(min-width: 1024px) 400px, 80vw"
+          className="object-cover rounded-[32px] transition-transform duration-500 hover:scale-105"
         />
         {product.badge && (
-          <span className="absolute top-2 right-0 border border-white/20 text-white/80 text-[10px] font-medium tracking-wide px-3 py-1 rounded-full">
+          <span className="absolute top-3 right-3 border border-white/20 bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-bold tracking-wide px-3 py-1 rounded-full z-10">
             {product.badge}
           </span>
         )}

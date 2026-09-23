@@ -123,13 +123,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body, button, input, select, textarea {
+    font-family: "Vazirmatn", "Vazir", "IRANSans", "B Yekan", "Tahoma", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  }
   body {
     @apply bg-background text-foreground;
-    font-family: "Vazirmatn", "Vazir", var(--font-vazirmatn), "IRANSans", "B Yekan", "Tahoma", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
   html {
-    font-family: "Vazirmatn", "Vazir", var(--font-vazirmatn), "IRANSans", "B Yekan", "Tahoma", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     letter-spacing: -0.01em;
     font-feature-settings: "ss01", "ss02", "cv01";
   }

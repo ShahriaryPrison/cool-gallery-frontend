@@ -20,15 +20,25 @@ export default async function HomePage() {
       getCategories().catch(() => null),
     ]);
 
-    if (productsRes?.data && productsRes.data.length > 0) {
-      products = productsRes.data.map(transformProductSummary);
-    }
+    const catMap: Record<number, string> = {};
     if (categoriesRes?.data && categoriesRes.data.length > 0) {
+      categoriesRes.data.forEach((c) => {
+        catMap[c.id] = c.name;
+        if (c.children) {
+          c.children.forEach((sub) => {
+            catMap[sub.id] = sub.name;
+          });
+        }
+      });
       categories = categoriesRes.data.map((c) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
       }));
+    }
+
+    if (productsRes?.data && productsRes.data.length > 0) {
+      products = productsRes.data.map((p) => transformProductSummary(p, catMap));
     }
   } catch (err) {
     console.error("Failed to fetch homepage products/categories:", err);

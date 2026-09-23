@@ -182,16 +182,17 @@ function ProductFrame({
 
         <motion.div
           style={{ clipPath: imgClip, scale: imgScale }}
-          className="relative w-full h-[40%] flex items-center justify-center shrink-0 origin-center z-10"
+          className="relative w-full max-w-[320px] aspect-square flex items-center justify-center shrink-0 origin-center z-10 rounded-[28px] overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.7)] bg-[#09090c]"
         >
           <Image
             src={product.image || "/products/fidget-dragon-black.png"}
             alt={product.name}
             fill
-            className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]"
+            sizes="(max-width: 768px) 320px, 400px"
+            className="object-cover rounded-[28px]"
           />
           {product.badge && (
-            <span className="absolute top-0 right-2 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-medium px-3 py-1.5 rounded-full shadow-2xl">
+            <span className="absolute top-3 right-3 bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] font-medium px-3 py-1 rounded-full shadow-2xl z-20">
               {product.badge}
             </span>
           )}

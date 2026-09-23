@@ -239,8 +239,24 @@ export function formatIrrAsToman(irr: number): string {
   return new Intl.NumberFormat("fa-IR").format(toman) + " تومان";
 }
 
+export const DEFAULT_CATEGORY_MAP: Record<number, string> = {
+  11: "دستبند",
+  6: "کلاه",
+  65: "کیف",
+  53: "فیگور",
+  8: "گردنبند",
+  15: "پاد",
+  17: "پاد دائمی",
+  19: "سالت",
+  21: "پاد یکبار مصرف",
+  22: "کویل و کارتریج",
+};
+
 /** Transforms backend ProductSummary into frontend Product structure */
-export function transformProductSummary(p: ProductSummary): Product {
+export function transformProductSummary(
+  p: ProductSummary,
+  categoryMap?: Record<number, string>
+): Product {
   const defaultVar = p.default_variant;
   const priceToman = defaultVar ? irrToToman(defaultVar.base_price) : 500000;
   const oldPriceToman = defaultVar?.compare_at_price
@@ -248,10 +264,15 @@ export function transformProductSummary(p: ProductSummary): Product {
     : undefined;
   const image = p.images?.[0]?.url || "/products/fidget-dragon-black.png";
 
+  const resolvedCat =
+    p.category?.name ||
+    (p.product_category_id ? (categoryMap?.[p.product_category_id] || DEFAULT_CATEGORY_MAP[p.product_category_id]) : undefined) ||
+    "اکسسوری";
+
   return {
     id: p.slug || String(p.id),
     name: p.name,
-    cat: (p.category?.name || "سایر") as any,
+    cat: resolvedCat as any,
     price: priceToman,
     oldPrice: oldPriceToman,
     badge: oldPriceToman ? "تخفیف" : "جدید",
