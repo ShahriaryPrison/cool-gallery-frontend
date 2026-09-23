@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# COOL Gallery
 
-## Getting Started
+فروشگاه اکسسوری «COOL» — بازسازی رابط کاربری از روی طرح اولیه (`cool-gallery-shop.html`) با استک زیر:
 
-First, run the development server:
+- **Next.js 16** (App Router, Turbopack) + **React 19** + TypeScript
+- **Tailwind CSS v4**
+- **shadcn/ui** (روی [Base UI](https://base-ui.com)) برای کامپوننت‌ها — Sheet، Drawer، Select، Switch، Sonner و ...
+- فونت [Vazirmatn](https://fonts.google.com/specimen/Vazirmatn) برای متن فارسی و [Bowlby One](https://fonts.google.com/specimen/Bowlby+One) برای اعداد نمایشی
+- راست‌به‌چپ (RTL) به‌صورت کامل
+
+این نسخه فقط **رابط کاربری با داده‌ی نمایشی (mock)** است — بدون بک‌اند یا پرداخت واقعی. سبد خرید در `localStorage` مرورگر ذخیره می‌شود.
+
+## اجرا در محیط توسعه
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+سپس [http://localhost:3000](http://localhost:3000) را باز کنید.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ساختار پروژه
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+  page.tsx                 صفحه خانه
+  shop/page.tsx             فروشگاه (جست‌وجو، دسته‌بندی، فیلتر، مرتب‌سازی)
+  product/[id]/page.tsx     جزئیات محصول
+  checkout/page.tsx         تکمیل خرید
+  checkout/success/page.tsx تایید سفارش
+components/
+  cart/                     Context سبد خرید (localStorage) + Drawer سبد
+  layout/                   هدر، تیکر، فوتر، ناوبری پایین، منوی موبایل
+  product/                  کارت محصول، گالری، انتخاب رنگ/سایز
+  shop/                     منطق فیلتر/جست‌وجو/مرتب‌سازی فروشگاه
+  ui/                       کامپوننت‌های shadcn/ui
+lib/
+  data.ts                   داده‌های محصول، دسته‌بندی، روش ارسال/پرداخت
+  format.ts                 تبدیل اعداد به فارسی و فرمت تومان
+```
 
-## Learn More
+تصاویر محصول در طرح اصلی مسیرهای placeholder بودند (فایل واقعی نداشتند)، بنابراین در این نسخه هر کارت محصول یک آیکون مرتبط با دسته‌بندی روی گرادیان برند نمایش می‌دهد به‌جای تصویر شکسته یا عکس استوک بی‌ربط.
 
-To learn more about Next.js, take a look at the following resources:
+## دستورات
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run dev      # سرور توسعه (Turbopack)
+npm run build    # بیلد نسخه production
+npm run start    # اجرای نسخه production بیلدشده
+npm run lint     # ESLint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## دیپلوی
 
-## Deploy on Vercel
+این پروژه یک اپ استاندارد Next.js است و روی هر پلتفرمی که از Next.js پشتیبانی می‌کند (مثل [Vercel](https://vercel.com/new)) قابل دیپلوی است:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx vercel
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+یا برای هاست‌های دیگر:
+
+```bash
+npm run build
+npm run start
+```
+
+هیچ متغیر محیطی (env) یا سرویس خارجی‌ای لازم نیست — همه‌چیز استاتیک و mock است.
