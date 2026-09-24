@@ -198,6 +198,13 @@ export function ProductDetailView({
     return items;
   }, [backendProduct, product.image, visualOption]);
 
+  // Ensure activeImageIdx never exceeds gallery bounds
+  useEffect(() => {
+    if (activeImageIdx >= allGalleryImages.length && allGalleryImages.length > 0) {
+      setActiveImageIdx(allGalleryImages.length - 1);
+    }
+  }, [allGalleryImages.length, activeImageIdx]);
+
   const activeImage =
     allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
 
@@ -566,7 +573,7 @@ export function ProductDetailView({
 
                 {/* Top Left Slide Number Indicator */}
                 {hasMultipleImages && (
-                  <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-bold text-white/90 shadow-lg pointer-events-none">
+                  <div dir="ltr" className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-bold text-white/90 shadow-lg pointer-events-none">
                     {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
                   </div>
                 )}
@@ -879,7 +886,7 @@ export function ProductDetailView({
 
           {/* Top Left Slide Number Indicator */}
           {hasMultipleImages && (
-            <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-full text-[10.5px] font-bold text-white/90 shadow-md pointer-events-none">
+            <div dir="ltr" className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-full text-[10.5px] font-bold text-white/90 shadow-md pointer-events-none">
               {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
             </div>
           )}
@@ -1076,12 +1083,12 @@ export function ProductDetailView({
         <motion.div
           initial={false}
           animate={{
-            bottom: isNearBottom ? "84px" : "16px",
+            y: isNearBottom ? -68 : 0,
           }}
-          transition={{ type: "spring", stiffness: 340, damping: 28 }}
-          className="fixed left-0 right-0 z-40 px-4 pointer-events-none"
+          transition={{ type: "spring", stiffness: 350, damping: 28 }}
+          className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(14px,env(safe-area-inset-bottom))] pointer-events-none"
         >
-          <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3 pointer-events-auto max-w-[468px] mx-auto">
+          <div className="glass-dark border border-white/15 backdrop-blur-2xl bg-[#0c0c12]/95 rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3 pointer-events-auto max-w-[468px] mx-auto">
             <div>
               <span className="text-[10px] text-white/40 block">
                 قیمت {visualOption ? `(${currentActiveModelLabel})` : "نهایی"}
