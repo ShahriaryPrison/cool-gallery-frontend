@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "motion/react";
@@ -16,8 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Eye,
-  Layers,
   ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,8 +34,8 @@ const imageVariants: Variants = {
   enter: (direction: number) => ({
     opacity: 0,
     scale: 0.94,
-    y: direction > 0 ? 30 : -30,
-    filter: "blur(4px)",
+    y: direction > 0 ? 25 : -25,
+    filter: "blur(3px)",
   }),
   center: {
     zIndex: 1,
@@ -46,7 +44,7 @@ const imageVariants: Variants = {
     y: 0,
     filter: "blur(0px)",
     transition: {
-      duration: 0.4,
+      duration: 0.35,
       ease: [0.16, 1, 0.3, 1],
     },
   },
@@ -54,14 +52,23 @@ const imageVariants: Variants = {
     zIndex: 0,
     opacity: 0,
     scale: 1.04,
-    y: direction > 0 ? -30 : 30,
-    filter: "blur(4px)",
+    y: direction > 0 ? -25 : 25,
+    filter: "blur(3px)",
     transition: {
-      duration: 0.3,
+      duration: 0.28,
       ease: [0.16, 1, 0.3, 1],
     },
   }),
 };
+
+interface GalleryItem {
+  id: string | number;
+  url: string;
+  thumb_url: string;
+  label: string;
+  optionId?: number;
+  valueId?: number;
+}
 
 interface ProductDetailViewProps {
   product: Product;
@@ -79,9 +86,23 @@ export function ProductDetailView({
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [direction, setDirection] = useState(0);
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const mobileThumbRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
   const isUserInteractingRef = useRef(false);
   const userInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Identify if any option has value images (e.g. Models or Colors)
+  const visualOption = useMemo(() => {
+    return backendProduct?.options?.find((opt) =>
+      opt.values.some((v) => Boolean(v.image?.url))
+    ) || null;
+  }, [backendProduct]);
+
+  // Non-visual options (e.g. Size, Material) that need separate text pills
+  const textOptions = useMemo(() => {
+    if (!backendProduct?.options) return [];
+    return backendProduct.options.filter((opt) => opt.id !== visualOption?.id);
+  }, [backendProduct, visualOption]);
 
   // Default variant
   const defaultVar =
@@ -108,46 +129,128 @@ export function ProductDetailView({
     return initial;
   });
 
-  // Gallery thumbnails list
-  const allGalleryImages = useMemo(() => {
-    const images: { id: string | number; url: string; thumb_url?: string; label?: string }[] = [];
-    if (backendProduct?.images?.length) {
-      backendProduct.images.forEach((img, idx) => {
-        if (!images.some((i) => i.url === img.url)) {
-          images.push({
-            id: img.id,
-            url: img.url,
-            thumb_url: img.thumb_url || img.url,
-            label: `نمای ${toFaDigits(idx + 1)}`,
+  // Unified Gallery & Model Items (Zero Duplication!)
+  const allGalleryImages = useMemo<GalleryItem[]>(() => {
+    const items: GalleryItem[] = [];
+    const seenUrls = new Set<string>();
+
+    // 1. If we have a visual option (e.g. Models/Colors), add those as primary items
+    if (visualOption) {
+      visualOption.values.forEach((v) => {
+        const url = v.image?.url || "";
+        if (url && !seenUrls.has(url)) {
+          seenUrls.add(url);
+          items.push({
+            id: `opt-${v.id}`,
+            url,
+            thumb_url: v.image?.thumb_url || url,
+            label: v.value,
+            optionId: visualOption.id,
+            valueId: v.id,
           });
         }
       });
     }
-    // Also add option value images if not in list
-    if (backendProduct?.options?.length) {
-      backendProduct.options.forEach((opt) => {
-        opt.values.forEach((v) => {
-          if (v.image?.url && !images.some((i) => i.url === v.image!.url)) {
-            images.push({
-              id: `opt-${v.id}`,
-              url: v.image.url,
-              thumb_url: v.image.thumb_url || v.image.url,
-              label: v.value,
-            });
-          }
-        });
+
+    // 2. Add any general product images that aren't already included
+    if (backendProduct?.images?.length) {
+      backendProduct.images.forEach((img, idx) => {
+        if (!seenUrls.has(img.url)) {
+          seenUrls.add(img.url);
+          items.push({
+            id: img.id,
+            url: img.url,
+            thumb_url: img.thumb_url || img.url,
+            label: `نمای ${toFaDigits(items.length + 1)}`,
+          });
+        }
       });
     }
-    if (images.length === 0 && product.image) {
-      images.push({ id: "main", url: product.image, thumb_url: product.image, label: "نمای اصلی" });
+
+    // 3. Fallback to product main image
+    if (items.length === 0 && product.image) {
+      items.push({
+        id: "main",
+        url: product.image,
+        thumb_url: product.image,
+        label: "اصلی",
+      });
     }
-    return images;
-  }, [backendProduct, product.image]);
+
+    return items;
+  }, [backendProduct, product.image, visualOption]);
 
   const activeImage =
     allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
 
-  // Track scroll position to update center image as the user scrolls
+  const markUserInteraction = useCallback(() => {
+    isUserInteractingRef.current = true;
+    if (userInteractionTimeoutRef.current) {
+      clearTimeout(userInteractionTimeoutRef.current);
+    }
+    userInteractionTimeoutRef.current = setTimeout(() => {
+      isUserInteractingRef.current = false;
+    }, 1200);
+  }, []);
+
+  // Sync variant when option values change
+  const syncVariant = useCallback(
+    (nextOptions: Record<number, number>) => {
+      if (!backendProduct?.variants) return;
+      const selectedIds = Object.values(nextOptions);
+      const matchedVariant = backendProduct.variants.find((v) =>
+        selectedIds.every((id) => v.option_value_ids.includes(id))
+      );
+      if (matchedVariant) {
+        setActiveVariant(matchedVariant);
+      }
+    },
+    [backendProduct]
+  );
+
+  // Handle option select
+  const handleOptionSelect = useCallback(
+    (optionId: number, valueId: number, updateSlider = true) => {
+      const nextOptions = { ...selectedOptionValues, [optionId]: valueId };
+      setSelectedOptionValues(nextOptions);
+      syncVariant(nextOptions);
+
+      if (updateSlider) {
+        const foundIdx = allGalleryImages.findIndex(
+          (img) => img.optionId === optionId && img.valueId === valueId
+        );
+        if (foundIdx !== -1 && foundIdx !== activeImageIdx) {
+          markUserInteraction();
+          setDirection(foundIdx > activeImageIdx ? 1 : -1);
+          setActiveImageIdx(foundIdx);
+        }
+      }
+    },
+    [selectedOptionValues, syncVariant, allGalleryImages, activeImageIdx, markUserInteraction]
+  );
+
+  const changeSlide = useCallback(
+    (newIdx: number) => {
+      markUserInteraction();
+      const count = allGalleryImages.length;
+      if (count <= 1) return;
+      const next = (newIdx + count) % count;
+      setDirection(next > activeImageIdx ? 1 : -1);
+      setActiveImageIdx(next);
+
+      // Auto-select linked model/option value
+      const targetItem = allGalleryImages[next];
+      if (targetItem?.optionId && targetItem?.valueId) {
+        handleOptionSelect(targetItem.optionId, targetItem.valueId, false);
+      }
+    },
+    [allGalleryImages, activeImageIdx, markUserInteraction, handleOptionSelect]
+  );
+
+  const goToNext = () => changeSlide(activeImageIdx + 1);
+  const goToPrev = () => changeSlide(activeImageIdx - 1);
+
+  // Track scroll position to update center image on desktop as user scrolls
   const { scrollYProgress } = useScroll({
     target: scrollTrackRef,
     offset: ["start start", "end end"],
@@ -162,77 +265,25 @@ export function ProductDetailView({
     if (targetIdx !== activeImageIdx) {
       setDirection(targetIdx > activeImageIdx ? 1 : -1);
       setActiveImageIdx(targetIdx);
+
+      const targetItem = allGalleryImages[targetIdx];
+      if (targetItem?.optionId && targetItem?.valueId) {
+        handleOptionSelect(targetItem.optionId, targetItem.valueId, false);
+      }
     }
   });
 
-  const markUserInteraction = () => {
-    isUserInteractingRef.current = true;
-    if (userInteractionTimeoutRef.current) {
-      clearTimeout(userInteractionTimeoutRef.current);
-    }
-    userInteractionTimeoutRef.current = setTimeout(() => {
-      isUserInteractingRef.current = false;
-    }, 1200);
-  };
-
-  const changeSlide = (newIdx: number) => {
-    markUserInteraction();
-    const count = allGalleryImages.length;
-    if (count <= 1) return;
-    const next = (newIdx + count) % count;
-    setDirection(next > activeImageIdx ? 1 : -1);
-    setActiveImageIdx(next);
-  };
-
-  const goToNext = () => changeSlide(activeImageIdx + 1);
-  const goToPrev = () => changeSlide(activeImageIdx - 1);
-
-  // Auto-scroll thumbnail container when active image changes
+  // Auto-scroll thumbnail strip
   useEffect(() => {
-    if (!thumbnailContainerRef.current) return;
-    const container = thumbnailContainerRef.current;
-    const activeEl = container.children[activeImageIdx] as HTMLElement;
-    if (activeEl) {
-      const scrollPos = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
-      container.scrollTo({ left: scrollPos, behavior: "smooth" });
-    }
+    [thumbnailContainerRef.current, mobileThumbRef.current].forEach((container) => {
+      if (!container) return;
+      const activeEl = container.children[activeImageIdx] as HTMLElement;
+      if (activeEl) {
+        const scrollPos = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
+        container.scrollTo({ left: scrollPos, behavior: "smooth" });
+      }
+    });
   }, [activeImageIdx]);
-
-  // Handle option value click
-  const handleOptionSelect = (optionId: number, valueId: number) => {
-    const nextOptions = { ...selectedOptionValues, [optionId]: valueId };
-    setSelectedOptionValues(nextOptions);
-
-    const currentOpt = backendProduct?.options.find((o) => o.id === optionId);
-    const currentVal = currentOpt?.values.find((v) => v.id === valueId);
-
-    // If this option value has an image, switch slider immediately to it!
-    if (currentVal?.image?.url) {
-      const foundIdx = allGalleryImages.findIndex((img) => img.url === currentVal.image!.url);
-      if (foundIdx !== -1) {
-        changeSlide(foundIdx);
-      }
-    }
-
-    // Match variant with selected options
-    if (backendProduct?.variants) {
-      const selectedIds = Object.values(nextOptions);
-      const matchedVariant = backendProduct.variants.find((v) =>
-        selectedIds.every((id) => v.option_value_ids.includes(id))
-      );
-
-      if (matchedVariant) {
-        setActiveVariant(matchedVariant);
-        if (matchedVariant.images?.[0]?.url && !currentVal?.image?.url) {
-          const imgUrl = matchedVariant.images[0].url;
-          const foundIdx = allGalleryImages.findIndex((img) => img.url === imgUrl);
-          if (foundIdx !== -1) {
-            changeSlide(foundIdx);
-          }
-        }
-      }
-    }
-  };
 
   // Pricing calculations
   const priceToman = activeVariant ? irrToToman(activeVariant.base_price) : product.price;
@@ -285,6 +336,7 @@ export function ProductDetailView({
   };
 
   const hasMultipleImages = allGalleryImages.length > 1;
+  const currentActiveModelLabel = allGalleryImages[activeImageIdx]?.label;
 
   return (
     <div className="relative w-full bg-[#050507] text-white">
@@ -306,11 +358,11 @@ export function ProductDetailView({
         </div>
       </div>
 
-      {/* ─── DESKTOP VIEW: $3000 Showcase — 3-Column Center-Stage Scroll Sequence ─── */}
+      {/* ─── DESKTOP VIEW: 3-Column Luxury Center-Stage Scroll Sequence ─── */}
       <div
         ref={scrollTrackRef}
         style={{
-          minHeight: hasMultipleImages ? `${Math.max(180, allGalleryImages.length * 75)}vh` : "auto",
+          minHeight: hasMultipleImages ? `${Math.max(160, allGalleryImages.length * 65)}vh` : "auto",
         }}
         className="hidden lg:block relative max-w-[1440px] mx-auto px-8"
       >
@@ -324,7 +376,7 @@ export function ProductDetailView({
                   <Star className="size-3 fill-current" />
                   {toFaDigits(product.rating || 4.9)}
                 </span>
-                {product.badge && (
+                {product.badge && product.badge !== "جدید" && (
                   <span className="border border-white/15 bg-white/5 text-white/90 text-[11px] font-bold px-3 py-1 rounded-full">
                     {product.badge}
                   </span>
@@ -334,16 +386,6 @@ export function ProductDetailView({
               <h1 className="text-2xl xl:text-3xl font-black text-white leading-snug tracking-tight mb-4">
                 {product.name}
               </h1>
-
-              {/* Angle Sequence Helper */}
-              {hasMultipleImages && (
-                <div className="flex items-center gap-2 mb-5 text-[11.5px] text-white/60 bg-white/[0.04] border border-white/8 rounded-2xl p-2.5">
-                  <Layers className="size-4 text-brand shrink-0" />
-                  <span>
-                    اسکرول کنید تا تمام زوایا را در وسط تصویر ببینید
-                  </span>
-                </div>
-              )}
 
               {/* Description */}
               {product.description && (
@@ -386,7 +428,7 @@ export function ProductDetailView({
               </div>
             </div>
 
-            {/* ─── COLUMN 2 (Center): Cinematic Hero Image Stage ─── */}
+            {/* ─── COLUMN 2 (Center): Unified Interactive Model & Image Stage ─── */}
             <div className="col-span-6 flex flex-col items-center justify-center relative">
               {/* Central Spotlight Aura */}
               <div
@@ -399,7 +441,7 @@ export function ProductDetailView({
               />
 
               {/* Main Image Stage */}
-              <div className="relative aspect-[3/4] w-full max-w-[440px] xl:max-w-[480px] rounded-[36px] overflow-hidden border border-white/10 bg-[#08080c] shadow-[0_24px_80px_rgba(0,0,0,0.8),0_0_40px_rgba(255,45,60,0.15)] select-none">
+              <div className="relative aspect-[3/4] w-full max-w-[420px] xl:max-w-[460px] rounded-[36px] overflow-hidden border border-white/10 bg-[#08080c] shadow-[0_24px_80px_rgba(0,0,0,0.8),0_0_40px_rgba(255,45,60,0.15)] select-none">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
                     key={activeImageIdx}
@@ -436,16 +478,16 @@ export function ProductDetailView({
                 {/* Top Badge Overlay */}
                 {discountPercent && (
                   <span className="absolute top-4 right-4 bg-brand text-white text-xs font-black px-3 py-1 rounded-full shadow-[0_0_14px_rgba(255,45,60,0.6)] z-20 pointer-events-none">
-                    {discountPercent}% تخفیف ویژه
+                    {discountPercent}% تخفیف
                   </span>
                 )}
 
-                {/* Top Left Angle Label */}
+                {/* Top Left Active Model Badge */}
                 {hasMultipleImages && (
-                  <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-bold text-white/90 shadow-lg pointer-events-none flex items-center gap-1.5">
-                    <Eye className="size-3 text-brand" />
+                  <div className="absolute top-4 left-4 z-20 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg pointer-events-none flex items-center gap-1.5">
+                    <Sparkles className="size-3 text-brand" />
                     <span>
-                      {allGalleryImages[activeImageIdx]?.label || `زاویه ${toFaDigits(activeImageIdx + 1)}`}
+                      {visualOption ? `${visualOption.name}: ${currentActiveModelLabel}` : currentActiveModelLabel}
                     </span>
                   </div>
                 )}
@@ -457,7 +499,7 @@ export function ProductDetailView({
                       type="button"
                       onClick={goToNext}
                       className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                      aria-label="تصویر بعدی"
+                      aria-label="بعدی"
                     >
                       <ChevronRight className="size-5" />
                     </button>
@@ -465,7 +507,7 @@ export function ProductDetailView({
                       type="button"
                       onClick={goToPrev}
                       className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                      aria-label="تصویر قبلی"
+                      aria-label="قبلی"
                     >
                       <ChevronLeft className="size-5" />
                     </button>
@@ -486,47 +528,59 @@ export function ProductDetailView({
                             ? "w-6 bg-brand shadow-[0_0_10px_rgba(255,45,60,0.9)]"
                             : "w-1.5 bg-white/30 hover:bg-white/70"
                         )}
-                        aria-label={`زاویه ${i + 1}`}
+                        aria-label={`اسلاید ${i + 1}`}
                       />
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Bottom Thumbnail Strip */}
+              {/* ── UNIFIED MODEL & THUMBNAIL STRIP ── */}
               {hasMultipleImages && (
-                <div
-                  ref={thumbnailContainerRef}
-                  className="mt-4 flex items-center gap-2.5 no-scrollbar max-w-[480px] overflow-x-auto p-1.5"
-                >
-                  {allGalleryImages.map((img, i) => {
-                    const isActive = activeImageIdx === i;
-                    return (
-                      <button
-                        key={img.id}
-                        type="button"
-                        onClick={() => changeSlide(i)}
-                        className={cn(
-                          "relative size-14 shrink-0 overflow-hidden rounded-xl border transition-all duration-200 bg-[#0c0c10]",
-                          isActive
-                            ? "border-brand shadow-[0_0_14px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40"
-                            : "border-white/10 opacity-50 hover:opacity-100 hover:border-white/30"
-                        )}
-                      >
-                        <Image
-                          src={img.thumb_url || img.url}
-                          alt="زاویه محصول"
-                          fill
-                          className="object-cover rounded-xl"
-                        />
-                      </button>
-                    );
-                  })}
+                <div className="mt-4 w-full max-w-[460px]">
+                  <div
+                    ref={thumbnailContainerRef}
+                    className="flex items-center gap-2.5 no-scrollbar overflow-x-auto p-1.5 scroll-smooth"
+                  >
+                    {allGalleryImages.map((img, i) => {
+                      const isActive = activeImageIdx === i;
+                      return (
+                        <button
+                          key={img.id}
+                          type="button"
+                          onClick={() => changeSlide(i)}
+                          className={cn(
+                            "relative flex flex-col items-center shrink-0 rounded-2xl border transition-all duration-300 p-1.5 bg-[#09090d]",
+                            isActive
+                              ? "border-brand shadow-[0_0_16px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40 bg-brand/10"
+                              : "border-white/10 opacity-55 hover:opacity-100 hover:border-white/30"
+                          )}
+                        >
+                          <div className="relative size-12 xl:size-14 rounded-xl overflow-hidden mb-1 bg-[#060608]">
+                            <Image
+                              src={img.thumb_url || img.url}
+                              alt={img.label}
+                              fill
+                              className="object-cover rounded-xl"
+                            />
+                          </div>
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none whitespace-nowrap",
+                              isActive ? "text-white bg-brand" : "text-white/60 bg-white/5"
+                            )}
+                          >
+                            {img.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* ─── COLUMN 3 (Left): Pricing & Sticky Order Actions ─── */}
+            {/* ─── COLUMN 3 (Left): Pricing & Order Actions ─── */}
             <div className="col-span-3 text-right flex flex-col justify-center max-h-[82vh] overflow-y-auto no-scrollbar pl-2 py-4">
               <div className="glass rounded-[28px] border border-white/10 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.5)]">
                 {/* Price Display */}
@@ -550,10 +604,10 @@ export function ProductDetailView({
                   )}
                 </div>
 
-                {/* Dynamic Options (Colors / Sizes / Styles) */}
-                {backendProduct?.options && backendProduct.options.length > 0 && (
+                {/* Non-Visual Options (e.g. Size, Material) */}
+                {textOptions.length > 0 && (
                   <div className="space-y-4 mb-6 border-t border-white/8 pt-4">
-                    {backendProduct.options.map((opt) => {
+                    {textOptions.map((opt) => {
                       const selectedValId = selectedOptionValues[opt.id];
                       const currentVal = opt.values.find((v) => v.id === selectedValId)?.value;
 
@@ -578,13 +632,6 @@ export function ProductDetailView({
                                       : "glass text-ink-3 hover:text-white hover:border-white/20"
                                   )}
                                 >
-                                  {v.image && (
-                                    <img
-                                      src={v.image.thumb_url || v.image.url}
-                                      alt={v.value}
-                                      className="size-4 rounded-full object-cover ring-1 ring-white/20"
-                                    />
-                                  )}
                                   <span>{v.value}</span>
                                   {active && <Check className="size-3 text-white" />}
                                 </button>
@@ -594,6 +641,16 @@ export function ProductDetailView({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Active Model Summary Pill if visualOption exists */}
+                {visualOption && (
+                  <div className="mb-5 p-3 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center justify-between">
+                    <span className="text-xs text-white/50">{visualOption.name} انتخابی:</span>
+                    <span className="text-xs font-bold text-white bg-brand/20 border border-brand/30 px-2.5 py-1 rounded-lg">
+                      {currentActiveModelLabel}
+                    </span>
                   </div>
                 )}
 
@@ -660,10 +717,10 @@ export function ProductDetailView({
         </div>
       </div>
 
-      {/* ─── MOBILE VIEW: Sticky Dynamic Stage with Smooth Touch Carousel ─── */}
+      {/* ─── MOBILE VIEW: Unified Modern Gallery & Model Picker ─── */}
       <div className="block lg:hidden px-4 pt-2 pb-32">
         {/* Main Image Slider Viewport */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] bg-[#09090c] select-none mb-4">
+        <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] bg-[#09090c] select-none mb-3">
           <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={activeImageIdx}
@@ -701,16 +758,19 @@ export function ProductDetailView({
             <span className="absolute top-3 right-3 bg-brand text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-md z-20 pointer-events-none">
               {discountPercent}% تخفیف
             </span>
-          ) : product.badge ? (
+          ) : product.badge && product.badge !== "جدید" ? (
             <span className="glass-brand absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md z-20 pointer-events-none">
               {product.badge}
             </span>
           ) : null}
 
-          {/* Top Left Slide Indicator */}
+          {/* Top Left Active Model Indicator */}
           {hasMultipleImages && (
-            <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white/90 shadow-md pointer-events-none">
-              {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
+            <div className="absolute top-3 left-3 z-20 bg-black/70 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-full text-[10.5px] font-bold text-white shadow-md pointer-events-none flex items-center gap-1.5">
+              <Sparkles className="size-3 text-brand" />
+              <span>
+                {visualOption ? `${visualOption.name}: ${currentActiveModelLabel}` : currentActiveModelLabel}
+              </span>
             </div>
           )}
 
@@ -721,7 +781,7 @@ export function ProductDetailView({
                 type="button"
                 onClick={goToNext}
                 className="absolute right-2 top-1/2 -translate-y-1/2 z-20 size-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white active:scale-90"
-                aria-label="تصویر بعدی"
+                aria-label="بعدی"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -729,7 +789,7 @@ export function ProductDetailView({
                 type="button"
                 onClick={goToPrev}
                 className="absolute left-2 top-1/2 -translate-y-1/2 z-20 size-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white active:scale-90"
-                aria-label="تصویر قبلی"
+                aria-label="قبلی"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -755,35 +815,59 @@ export function ProductDetailView({
           )}
         </div>
 
-        {/* Thumbnail Gallery Strip */}
+        {/* ── UNIFIED MOBILE MODEL & THUMBNAIL SELECTOR (NO DUPLICATION) ── */}
         {hasMultipleImages && (
-          <div
-            ref={thumbnailContainerRef}
-            className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-2 scroll-smooth mb-4"
-          >
-            {allGalleryImages.map((img, i) => {
-              const isActive = activeImageIdx === i;
-              return (
-                <button
-                  key={img.id}
-                  type="button"
-                  onClick={() => changeSlide(i)}
-                  className={cn(
-                    "relative size-14 shrink-0 overflow-hidden rounded-xl border transition-all duration-200",
-                    isActive
-                      ? "border-brand shadow-[0_0_12px_rgba(255,45,60,0.5)] scale-105"
-                      : "border-white/10 opacity-50"
-                  )}
-                >
-                  <Image
-                    src={img.thumb_url || img.url}
-                    alt="تصویر محصول"
-                    fill
-                    className="object-cover rounded-xl"
-                  />
-                </button>
-              );
-            })}
+          <div className="mb-4">
+            {visualOption && (
+              <div className="flex items-center justify-between px-1 mb-2 text-xs">
+                <span className="text-white/60 font-medium flex items-center gap-1">
+                  <Sparkles className="size-3 text-brand" />
+                  <span>انتخاب {visualOption.name}:</span>
+                </span>
+                <span className="font-bold text-white bg-brand/15 border border-brand/30 px-2.5 py-0.5 rounded-full text-[11px]">
+                  {currentActiveModelLabel}
+                </span>
+              </div>
+            )}
+
+            <div
+              ref={mobileThumbRef}
+              className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1.5 scroll-smooth p-1"
+            >
+              {allGalleryImages.map((img, i) => {
+                const isActive = activeImageIdx === i;
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => changeSlide(i)}
+                    className={cn(
+                      "relative flex flex-col items-center shrink-0 rounded-2xl border transition-all duration-200 p-1 bg-[#09090d]",
+                      isActive
+                        ? "border-brand shadow-[0_0_12px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40 bg-brand/10"
+                        : "border-white/10 opacity-55 hover:opacity-100"
+                    )}
+                  >
+                    <div className="relative size-13 sm:size-15 rounded-xl overflow-hidden mb-1 bg-[#060608]">
+                      <Image
+                        src={img.thumb_url || img.url}
+                        alt={img.label}
+                        fill
+                        className="object-cover rounded-xl"
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[9.5px] font-bold px-1.5 py-0.5 rounded-md leading-none whitespace-nowrap",
+                        isActive ? "text-white bg-brand" : "text-white/60 bg-white/5"
+                      )}
+                    >
+                      {img.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -817,17 +901,18 @@ export function ProductDetailView({
           </div>
         </div>
 
-        {/* Mobile Variant Options */}
-        {backendProduct?.options && backendProduct.options.length > 0 && (
+        {/* Text-Only Options on Mobile (e.g. Size / Material) */}
+        {textOptions.length > 0 && (
           <div className="glass rounded-2xl p-4 border border-white/8 space-y-4 mb-4">
-            {backendProduct.options.map((opt) => {
+            {textOptions.map((opt) => {
               const selectedValId = selectedOptionValues[opt.id];
               const currentVal = opt.values.find((v) => v.id === selectedValId)?.value;
 
               return (
                 <div key={opt.id}>
-                  <div className="text-xs text-ink-3 mb-2">
-                    {opt.name}: <span className="font-bold text-white">{currentVal}</span>
+                  <div className="text-xs text-ink-3 mb-2 flex items-center justify-between">
+                    <span>{opt.name}:</span>
+                    <span className="font-bold text-white">{currentVal}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {opt.values.map((v) => {
@@ -844,13 +929,6 @@ export function ProductDetailView({
                               : "glass text-ink-3 hover:text-white"
                           )}
                         >
-                          {v.image && (
-                            <img
-                              src={v.image.thumb_url || v.image.url}
-                              alt={v.value}
-                              className="size-4 rounded-full object-cover"
-                            />
-                          )}
                           <span>{v.value}</span>
                           {active && <Check className="size-3 text-white" />}
                         </button>
@@ -888,7 +966,9 @@ export function ProductDetailView({
         <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
           <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] text-white/40 block">قیمت نهایی</span>
+              <span className="text-[10px] text-white/40 block">
+                قیمت {visualOption ? `(${currentActiveModelLabel})` : "نهایی"}
+              </span>
               <span className="text-base font-extrabold text-white">
                 {formatToman(priceToman)}{" "}
                 <span className="text-[9px] text-white/50">تومان</span>
