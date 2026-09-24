@@ -482,13 +482,10 @@ export function ProductDetailView({
                   </span>
                 )}
 
-                {/* Top Left Active Model Badge */}
+                {/* Top Left Slide Number Indicator */}
                 {hasMultipleImages && (
-                  <div className="absolute top-4 left-4 z-20 bg-black/70 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg pointer-events-none flex items-center gap-1.5">
-                    <Sparkles className="size-3 text-brand" />
-                    <span>
-                      {visualOption ? `${visualOption.name}: ${currentActiveModelLabel}` : currentActiveModelLabel}
-                    </span>
+                  <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-bold text-white/90 shadow-lg pointer-events-none">
+                    {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
                   </div>
                 )}
 
@@ -764,13 +761,10 @@ export function ProductDetailView({
             </span>
           ) : null}
 
-          {/* Top Left Active Model Indicator */}
+          {/* Top Left Slide Number Indicator */}
           {hasMultipleImages && (
-            <div className="absolute top-3 left-3 z-20 bg-black/70 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-full text-[10.5px] font-bold text-white shadow-md pointer-events-none flex items-center gap-1.5">
-              <Sparkles className="size-3 text-brand" />
-              <span>
-                {visualOption ? `${visualOption.name}: ${currentActiveModelLabel}` : currentActiveModelLabel}
-              </span>
+            <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-full text-[10.5px] font-bold text-white/90 shadow-md pointer-events-none">
+              {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
             </div>
           )}
 
