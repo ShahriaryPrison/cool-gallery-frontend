@@ -109,82 +109,82 @@ export function ProductShowcase({
                 }}
               />
 
-              {/* Top Frame Counter Badge */}
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="cinematic-counter text-[10px] font-semibold tracking-widest text-white/40">
-                  FRAME {COUNTER[i] ?? String(i + 1).padStart(2, "0")}/{COUNTER[products.length - 1] ?? "04"}
-                </span>
-                <span className="text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
+              {/* Card Category Badge */}
+              <div className="flex items-center justify-end mb-3 px-1">
+                <span className="text-[10px] font-medium text-white/60 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
                   {product.cat}
                 </span>
               </div>
 
-              {/* Product Image */}
-              <div className="relative w-full aspect-square rounded-[24px] overflow-hidden bg-black/40 border border-white/10 mb-4 shadow-inner">
-                <Image
-                  src={product.image || "/products/fidget-dragon-black.png"}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 768px) 340px, 400px"
-                  className="object-cover rounded-[24px] transition-transform duration-500 hover:scale-105"
-                />
-                {discountPct ? (
-                  <span className="absolute top-2.5 right-2.5 bg-brand text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-[0_0_12px_rgba(255,45,60,0.6)] z-10">
-                    {discountPct}%
-                  </span>
-                ) : product.badge ? (
-                  <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg z-10">
-                    {product.badge}
-                  </span>
-                ) : null}
-              </div>
-
-              {/* Info */}
-              <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-extrabold text-white leading-tight line-clamp-1">
-                  {product.name}
-                </h3>
-                <p className="text-white/50 text-[11.5px] leading-relaxed line-clamp-2 min-h-[34px]">
-                  {product.description}
-                </p>
-
-                {/* Specs */}
-                {product.specs && product.specs.length > 0 && (
-                  <div className="flex flex-wrap gap-1 my-1">
-                    {product.specs.slice(0, 2).map((spec, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-[9.5px] text-white/70"
-                      >
-                        <span className="text-white/40 ml-1">{spec.k}:</span>
-                        {spec.v}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Pricing & CTA Button */}
-                <div className="mt-2 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
-                  <div className="flex flex-col">
-                    {product.oldPrice && (
-                      <span className="text-white/35 line-through text-[10px]">
-                        {formatToman(product.oldPrice)}
-                      </span>
-                    )}
-                    <span className="text-base font-black text-brand">
-                      {formatToman(product.price)}{" "}
-                      <span className="text-[10px] font-normal text-white/40">تومان</span>
+              {/* Clickable Card Body linking to Product Detail */}
+              <Link href={`/product/${product.id}`} className="block group">
+                {/* Product Image */}
+                <div className="relative w-full aspect-square rounded-[24px] overflow-hidden bg-black/40 border border-white/10 mb-4 shadow-inner">
+                  <Image
+                    src={product.image || "/products/fidget-dragon-black.png"}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 340px, 400px"
+                    className="object-cover rounded-[24px] transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {discountPct ? (
+                    <span className="absolute top-2.5 right-2.5 bg-brand text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-[0_0_12px_rgba(255,45,60,0.6)] z-10">
+                      {discountPct}%
                     </span>
-                  </div>
-
-                  <Link
-                    href={`/product/${product.id}`}
-                    className="bg-brand text-white font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.35)] active:scale-95 transition-all"
-                  >
-                    <span>خرید</span>
-                    <ArrowLeft className="size-3.5" />
-                  </Link>
+                  ) : product.badge ? (
+                    <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg z-10">
+                      {product.badge}
+                    </span>
+                  ) : null}
                 </div>
+
+                {/* Info */}
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-lg font-extrabold text-white leading-tight line-clamp-1 group-hover:text-brand-soft transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-white/50 text-[11.5px] leading-relaxed line-clamp-2 min-h-[34px]">
+                    {product.description}
+                  </p>
+
+                  {/* Specs */}
+                  {product.specs && product.specs.length > 0 && (
+                    <div className="flex flex-wrap gap-1 my-1">
+                      {product.specs.slice(0, 2).map((spec, idx) => (
+                        <span
+                          key={idx}
+                          className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-[9.5px] text-white/70"
+                        >
+                          <span className="text-white/40 ml-1">{spec.k}:</span>
+                          {spec.v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Link>
+
+              {/* Pricing & CTA Button */}
+              <div className="mt-2 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  {product.oldPrice && (
+                    <span className="text-white/35 line-through text-[10px]">
+                      {formatToman(product.oldPrice)}
+                    </span>
+                  )}
+                  <span className="text-base font-black text-brand">
+                    {formatToman(product.price)}{" "}
+                    <span className="text-[10px] font-normal text-white/40">تومان</span>
+                  </span>
+                </div>
+
+                <Link
+                  href={`/product/${product.id}`}
+                  className="bg-brand text-white font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.35)] active:scale-95 transition-all"
+                >
+                  <span>خرید</span>
+                  <ArrowLeft className="size-3.5" />
+                </Link>
               </div>
             </div>
           );

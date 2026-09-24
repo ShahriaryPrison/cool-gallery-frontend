@@ -1,4 +1,3 @@
-import { ScrollProgress } from "@/components/home-test/scroll-progress";
 import { HeroSection } from "@/components/home-test/hero-section";
 import { ProductShowcase } from "@/components/home-test/product-showcase";
 import { CategoriesParallax } from "@/components/home-test/categories-parallax";
@@ -64,10 +63,7 @@ export default async function HomePage() {
         });
 
   return (
-    <>
-      <ScrollProgress />
-
-      <div className="bg-surface-0">
+    <div className="bg-surface-0">
         {/* Section 1: Cinematic Hero */}
         <HeroSection />
 
@@ -90,6 +86,5 @@ export default async function HomePage() {
         {/* Section 6: All Products Gallery Showcase (Top 10 Products) */}
         <StickyCardsShowcase products={products.slice(0, 10)} />
       </div>
-    </>
   );
 }

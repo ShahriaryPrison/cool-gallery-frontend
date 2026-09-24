@@ -54,26 +54,30 @@ function ScrollProgress() {
 export function BottomNav() {
   const pathname = usePathname();
   const cart = useCart();
-  const { scrollY } = useScroll();
-  const [visible, setVisible] = useState(() => pathname !== "/");
+  const [visible, setVisible] = useState(() => !pathname.startsWith("/product") && pathname !== "/");
 
   useEffect(() => {
-    if (pathname !== "/") {
-      setVisible(true);
-    } else {
-      setVisible(scrollY.get() > 50);
-    }
-  }, [pathname, scrollY]);
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    if (pathname === "/") {
-      if (latest > 50) {
-        setVisible(true);
+    const checkVisibility = () => {
+      if (pathname.startsWith("/product")) {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollPos = window.scrollY + window.innerHeight;
+        // Show only when user scrolls near the end of the page (within 420px)
+        setVisible(scrollHeight > 0 && scrollPos >= scrollHeight - 420);
+      } else if (pathname === "/") {
+        setVisible(window.scrollY > 50);
       } else {
-        setVisible(false);
+        setVisible(true);
       }
-    }
-  });
+    };
+
+    checkVisibility();
+    window.addEventListener("scroll", checkVisibility, { passive: true });
+    window.addEventListener("resize", checkVisibility, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", checkVisibility);
+      window.removeEventListener("resize", checkVisibility);
+    };
+  }, [pathname]);
 
   return (
     <div

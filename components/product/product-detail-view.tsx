@@ -30,33 +30,30 @@ import type { Product } from "@/lib/data";
 import type { ProductDetail, ProductVariant } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// Luxurious 3D-depth scroll & slide transition
+// Smooth GPU-accelerated slide transition (zero blur filter to avoid mobile FPS drops)
 const imageVariants: Variants = {
   enter: (direction: number) => ({
     opacity: 0,
-    scale: 0.94,
-    y: direction > 0 ? 25 : -25,
-    filter: "blur(3px)",
+    scale: 0.95,
+    y: direction > 0 ? 18 : -18,
   }),
   center: {
     zIndex: 1,
     opacity: 1,
     scale: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.35,
+      duration: 0.28,
       ease: [0.16, 1, 0.3, 1],
     },
   },
   exit: (direction: number) => ({
     zIndex: 0,
     opacity: 0,
-    scale: 1.04,
-    y: direction > 0 ? -25 : 25,
-    filter: "blur(3px)",
+    scale: 1.03,
+    y: direction > 0 ? -18 : 18,
     transition: {
-      duration: 0.28,
+      duration: 0.22,
       ease: [0.16, 1, 0.3, 1],
     },
   }),
@@ -86,11 +83,29 @@ export function ProductDetailView({
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [direction, setDirection] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [isNearBottom, setIsNearBottom] = useState(false);
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
   const mobileThumbRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
   const isUserInteractingRef = useRef(false);
   const userInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track scroll on mobile/page to adjust floating purchase bar when BottomNav appears
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollPos = window.scrollY + window.innerHeight;
+      setIsNearBottom(scrollHeight > 0 && scrollPos >= scrollHeight - 420);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
 
   // Identify if any option has value images (e.g. Models or Colors)
   const visualOption = useMemo(() => {
@@ -1058,8 +1073,15 @@ export function ProductDetailView({
         )}
 
         {/* Mobile Sticky Bottom Floating Action Bar with Dynamic Cart Morph */}
-        <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
-          <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3">
+        <motion.div
+          initial={false}
+          animate={{
+            bottom: isNearBottom ? "84px" : "16px",
+          }}
+          transition={{ type: "spring", stiffness: 340, damping: 28 }}
+          className="fixed left-0 right-0 z-40 px-4 pointer-events-none"
+        >
+          <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3 pointer-events-auto max-w-[468px] mx-auto">
             <div>
               <span className="text-[10px] text-white/40 block">
                 قیمت {visualOption ? `(${currentActiveModelLabel})` : "نهایی"}
@@ -1130,7 +1152,7 @@ export function ProductDetailView({
               </AnimatePresence>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

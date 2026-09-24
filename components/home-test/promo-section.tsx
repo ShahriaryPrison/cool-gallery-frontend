@@ -1,33 +1,21 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { motion } from "motion/react";
 import { Sparkles, Gift, ArrowLeft } from "lucide-react";
 
 export function PromoSection() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-
-  const cardY = useTransform(scrollYProgress, [0, 0.4], [60, 0]);
-  const cardOpacity = useTransform(scrollYProgress, [0.05, 0.3], [0, 1]);
-  const cardScale = useTransform(scrollYProgress, [0.05, 0.4], [0.94, 1]);
-
   return (
     <section
-      ref={containerRef}
-      className="relative min-h-[85vh] flex items-center justify-center py-28 lg:py-40 px-6 overflow-hidden"
+      className="relative min-h-[80vh] flex items-center justify-center py-24 lg:py-36 px-6 overflow-hidden"
     >
       {/* ─── Cinematic Spotlight ─── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         {/* Central spotlight cone */}
         <div
-          className="absolute top-1/2 left-1/2 size-[500px] lg:size-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40"
+          className="absolute top-1/2 left-1/2 size-[450px] lg:size-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-35"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 40%, rgba(255,45,60,0.3) 0%, rgba(255,20,50,0.1) 35%, transparent 65%)",
+              "radial-gradient(ellipse at 50% 40%, rgba(255,45,60,0.25) 0%, rgba(255,20,50,0.08) 35%, transparent 65%)",
           }}
         />
 
@@ -43,8 +31,11 @@ export function PromoSection() {
 
       {/* ─── Promo Card ─── */}
       <motion.div
-        className="relative z-10 w-full max-w-[580px] mx-auto rounded-[2.5rem] p-[1px] bg-gradient-to-b from-brand/50 via-white/10 to-brand/20 shadow-[0_20px_70px_rgba(255,45,60,0.22),0_0_120px_rgba(0,0,0,0.8)]"
-        style={{ y: cardY, opacity: cardOpacity, scale: cardScale }}
+        initial={{ opacity: 0, y: 30, scale: 0.96 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-[580px] mx-auto rounded-[2.5rem] p-[1px] bg-gradient-to-b from-brand/50 via-white/10 to-brand/20 shadow-[0_20px_70px_rgba(255,45,60,0.22),0_0_120px_rgba(0,0,0,0.8)] will-change-transform"
       >
         <div className="relative overflow-hidden rounded-[2.45rem] bg-[#0c090d]/90 p-8 sm:p-12 lg:p-14 text-center backdrop-blur-2xl">
           {/* Scanline overlay (CRT effect) */}
