@@ -3,45 +3,62 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, Star, ShieldCheck, Truck, RotateCcw, Minus, Plus, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "motion/react";
+import {
+  ArrowRight,
+  Star,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  Minus,
+  Plus,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Eye,
+  Layers,
+  ShoppingBag,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { Reveal } from "@/components/motion/reveal";
-import { ProductCard } from "@/components/product/product-card";
-import { formatIrrAsToman, irrToToman } from "@/lib/api";
+import { irrToToman } from "@/lib/api";
 import { formatToman, toFaDigits } from "@/lib/format";
 import type { Variants } from "motion/react";
 import type { Product } from "@/lib/data";
 import type { ProductDetail, ProductVariant } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const slideVariants: Variants = {
+// Luxurious 3D-depth scroll & slide transition
+const imageVariants: Variants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? -120 : 120,
     opacity: 0,
-    scale: 0.97,
+    scale: 0.94,
+    y: direction > 0 ? 30 : -30,
+    filter: "blur(4px)",
   }),
   center: {
     zIndex: 1,
-    x: 0,
     opacity: 1,
     scale: 1,
+    y: 0,
+    filter: "blur(0px)",
     transition: {
-      x: { type: "spring" as const, stiffness: 320, damping: 32 },
-      opacity: { duration: 0.25 },
-      scale: { duration: 0.25 },
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1],
     },
   },
   exit: (direction: number) => ({
     zIndex: 0,
-    x: direction > 0 ? 120 : -120,
     opacity: 0,
-    scale: 0.97,
+    scale: 1.04,
+    y: direction > 0 ? -30 : 30,
+    filter: "blur(4px)",
     transition: {
-      x: { type: "spring" as const, stiffness: 320, damping: 32 },
-      opacity: { duration: 0.2 },
+      duration: 0.3,
+      ease: [0.16, 1, 0.3, 1],
     },
   }),
 };
@@ -62,6 +79,9 @@ export function ProductDetailView({
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [direction, setDirection] = useState(0);
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTrackRef = useRef<HTMLDivElement>(null);
+  const isUserInteractingRef = useRef(false);
+  const userInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Default variant
   const defaultVar =
@@ -90,11 +110,16 @@ export function ProductDetailView({
 
   // Gallery thumbnails list
   const allGalleryImages = useMemo(() => {
-    const images: { id: string | number; url: string; thumb_url?: string }[] = [];
+    const images: { id: string | number; url: string; thumb_url?: string; label?: string }[] = [];
     if (backendProduct?.images?.length) {
-      backendProduct.images.forEach((img) => {
+      backendProduct.images.forEach((img, idx) => {
         if (!images.some((i) => i.url === img.url)) {
-          images.push({ id: img.id, url: img.url, thumb_url: img.thumb_url || img.url });
+          images.push({
+            id: img.id,
+            url: img.url,
+            thumb_url: img.thumb_url || img.url,
+            label: `نمای ${toFaDigits(idx + 1)}`,
+          });
         }
       });
     }
@@ -103,20 +128,55 @@ export function ProductDetailView({
       backendProduct.options.forEach((opt) => {
         opt.values.forEach((v) => {
           if (v.image?.url && !images.some((i) => i.url === v.image!.url)) {
-            images.push({ id: `opt-${v.id}`, url: v.image.url, thumb_url: v.image.thumb_url || v.image.url });
+            images.push({
+              id: `opt-${v.id}`,
+              url: v.image.url,
+              thumb_url: v.image.thumb_url || v.image.url,
+              label: v.value,
+            });
           }
         });
       });
     }
     if (images.length === 0 && product.image) {
-      images.push({ id: "main", url: product.image, thumb_url: product.image });
+      images.push({ id: "main", url: product.image, thumb_url: product.image, label: "نمای اصلی" });
     }
     return images;
   }, [backendProduct, product.image]);
 
-  const activeImage = allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
+  const activeImage =
+    allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
+
+  // Track scroll position to update center image as the user scrolls
+  const { scrollYProgress } = useScroll({
+    target: scrollTrackRef,
+    offset: ["start start", "end end"],
+  });
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (isUserInteractingRef.current) return;
+    const count = allGalleryImages.length;
+    if (count <= 1) return;
+
+    const targetIdx = Math.min(count - 1, Math.max(0, Math.floor(latest * count * 0.999)));
+    if (targetIdx !== activeImageIdx) {
+      setDirection(targetIdx > activeImageIdx ? 1 : -1);
+      setActiveImageIdx(targetIdx);
+    }
+  });
+
+  const markUserInteraction = () => {
+    isUserInteractingRef.current = true;
+    if (userInteractionTimeoutRef.current) {
+      clearTimeout(userInteractionTimeoutRef.current);
+    }
+    userInteractionTimeoutRef.current = setTimeout(() => {
+      isUserInteractingRef.current = false;
+    }, 1200);
+  };
 
   const changeSlide = (newIdx: number) => {
+    markUserInteraction();
     const count = allGalleryImages.length;
     if (count <= 1) return;
     const next = (newIdx + count) % count;
@@ -150,8 +210,7 @@ export function ProductDetailView({
     if (currentVal?.image?.url) {
       const foundIdx = allGalleryImages.findIndex((img) => img.url === currentVal.image!.url);
       if (foundIdx !== -1) {
-        setDirection(foundIdx > activeImageIdx ? 1 : -1);
-        setActiveImageIdx(foundIdx);
+        changeSlide(foundIdx);
       }
     }
 
@@ -168,8 +227,7 @@ export function ProductDetailView({
           const imgUrl = matchedVariant.images[0].url;
           const foundIdx = allGalleryImages.findIndex((img) => img.url === imgUrl);
           if (foundIdx !== -1) {
-            setDirection(foundIdx > activeImageIdx ? 1 : -1);
-            setActiveImageIdx(foundIdx);
+            changeSlide(foundIdx);
           }
         }
       }
@@ -177,13 +235,16 @@ export function ProductDetailView({
   };
 
   // Pricing calculations
-  const priceToman = activeVariant
-    ? irrToToman(activeVariant.base_price)
-    : product.price;
+  const priceToman = activeVariant ? irrToToman(activeVariant.base_price) : product.price;
 
   const compareAtToman = activeVariant?.compare_at_price
     ? irrToToman(activeVariant.compare_at_price)
     : product.oldPrice;
+
+  const discountPercent =
+    compareAtToman && compareAtToman > priceToman
+      ? Math.round(((compareAtToman - priceToman) / compareAtToman) * 100)
+      : null;
 
   // Inventory & Stock
   const inStock = activeVariant ? activeVariant.in_stock : true;
@@ -223,336 +284,659 @@ export function ProductDetailView({
     toast.success("محصول به سبد خرید اضافه شد");
   };
 
+  const hasMultipleImages = allGalleryImages.length > 1;
+
   return (
-    <div className="pb-36 lg:pb-24">
-      {/* Back to shop */}
-      <div className="px-5 pt-4 max-w-7xl mx-auto lg:px-12 lg:pt-8">
+    <div className="relative w-full bg-[#050507] text-white">
+      {/* ── Top Header Navigation ── */}
+      <div className="max-w-[1400px] mx-auto px-5 pt-4 pb-2 lg:px-10 lg:pt-6 flex items-center justify-between z-30 relative">
         <Link
           href="/shop"
-          className="glass text-ink-2 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[12.5px] font-bold transition-colors hover:text-white"
+          className="glass text-ink-2 hover:text-white inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105 active:scale-95"
         >
-          <ArrowRight className="size-4" strokeWidth={2.2} />
-          بازگشت به فروشگاه
+          <ArrowRight className="size-3.5" strokeWidth={2.4} />
+          <span>بازگشت به فروشگاه</span>
         </Link>
+
+        <div className="flex items-center gap-2 text-xs text-ink-4">
+          <span className="hidden sm:inline">دسته‌بندی:</span>
+          <span className="text-brand font-bold bg-brand/10 border border-brand/20 px-3 py-1 rounded-full">
+            {product.cat}
+          </span>
+        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto lg:flex lg:items-start lg:gap-12 lg:px-12 lg:pt-8">
-        {/* ── Left/Top: Interactive Image Slider & Gallery ── */}
-        <div className="px-5 pt-6 lg:sticky lg:top-28 lg:w-[48%] lg:shrink-0 lg:px-0 lg:pt-0">
-          {/* Main Slider Viewport */}
-          <div className="relative aspect-square w-full overflow-hidden rounded-[32px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)] bg-[#09090c] select-none">
-            <AnimatePresence initial={false} custom={direction} mode="popLayout">
-              <motion.div
-                key={activeImageIdx}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(_, { offset, velocity }) => {
-                  const swipe = offset.x;
-                  if (swipe > 40 || velocity.x > 0.3) {
-                    goToNext();
-                  } else if (swipe < -40 || velocity.x < -0.3) {
-                    goToPrev();
-                  }
+      {/* ─── DESKTOP VIEW: $3000 Showcase — 3-Column Center-Stage Scroll Sequence ─── */}
+      <div
+        ref={scrollTrackRef}
+        style={{
+          minHeight: hasMultipleImages ? `${Math.max(180, allGalleryImages.length * 75)}vh` : "auto",
+        }}
+        className="hidden lg:block relative max-w-[1440px] mx-auto px-8"
+      >
+        <div className="sticky top-20 h-[calc(100vh-5rem)] flex items-center">
+          <div className="grid grid-cols-12 gap-8 w-full items-center">
+            
+            {/* ─── COLUMN 1 (Right): Product Story & Specs ─── */}
+            <div className="col-span-3 text-right flex flex-col justify-center max-h-[82vh] overflow-y-auto no-scrollbar pr-2 py-4">
+              <div className="flex items-center gap-2 text-xs mb-3">
+                <span className="glass-brand flex items-center gap-1 rounded-full px-3 py-1 font-bold text-white shadow-[0_0_12px_rgba(255,45,60,0.3)]">
+                  <Star className="size-3 fill-current" />
+                  {toFaDigits(product.rating || 4.9)}
+                </span>
+                {product.badge && (
+                  <span className="border border-white/15 bg-white/5 text-white/90 text-[11px] font-bold px-3 py-1 rounded-full">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-2xl xl:text-3xl font-black text-white leading-snug tracking-tight mb-4">
+                {product.name}
+              </h1>
+
+              {/* Angle Sequence Helper */}
+              {hasMultipleImages && (
+                <div className="flex items-center gap-2 mb-5 text-[11.5px] text-white/60 bg-white/[0.04] border border-white/8 rounded-2xl p-2.5">
+                  <Layers className="size-4 text-brand shrink-0" />
+                  <span>
+                    اسکرول کنید تا تمام زوایا را در وسط تصویر ببینید
+                  </span>
+                </div>
+              )}
+
+              {/* Description */}
+              {product.description && (
+                <div className="mb-6">
+                  <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2">
+                    درباره محصول
+                  </h3>
+                  <p className="text-ink-3 text-xs xl:text-sm leading-relaxed whitespace-pre-line">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Specs Table */}
+              {product.specs && product.specs.length > 0 && (
+                <div className="glass rounded-2xl border border-white/8 divide-y divide-white/6 overflow-hidden mb-4">
+                  {product.specs.slice(0, 4).map((s) => (
+                    <div key={s.k} className="flex justify-between px-3.5 py-2.5 text-xs">
+                      <span className="text-ink-4">{s.k}</span>
+                      <span className="text-ink-1 font-semibold">{s.v}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Guarantees */}
+              <div className="grid grid-cols-1 gap-2 pt-2 text-[11px] text-ink-4">
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="size-3.5 text-emerald-400 shrink-0" />
+                  <span>رنگ ثابت و ضمانت اصالت فیزیکی</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <Truck className="size-3.5 text-brand shrink-0" />
+                  <span>ارسال سریع و بسته‌بندی امن</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <RotateCcw className="size-3.5 text-amber-400 shrink-0" />
+                  <span>۷ روز مهلت تعویض و بازگشت</span>
+                </span>
+              </div>
+            </div>
+
+            {/* ─── COLUMN 2 (Center): Cinematic Hero Image Stage ─── */}
+            <div className="col-span-6 flex flex-col items-center justify-center relative">
+              {/* Central Spotlight Aura */}
+              <div
+                className="pointer-events-none absolute size-[500px] rounded-full opacity-35"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(255,45,60,0.28) 0%, rgba(255,45,60,0.06) 45%, transparent 70%)",
                 }}
-                className="absolute inset-0 cursor-grab active:cursor-grabbing w-full h-full"
-              >
-                <Image
-                  src={activeImage}
-                  alt={product.name}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 500px, 90vw"
-                  className="object-cover rounded-[32px] pointer-events-none"
-                />
-              </motion.div>
-            </AnimatePresence>
+                aria-hidden
+              />
 
-            {/* Top Right Badge */}
-            {product.badge && (
-              <span className="glass-brand absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-bold text-white shadow-lg z-20 pointer-events-none">
-                {product.badge}
-              </span>
-            )}
-
-            {/* Top Left Slide Counter */}
-            {allGalleryImages.length > 1 && (
-              <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-[11px] font-bold text-white/90 shadow-lg pointer-events-none">
-                {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
-              </div>
-            )}
-
-            {/* Navigation Arrows (Left & Right) */}
-            {allGalleryImages.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={goToNext}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                  aria-label="تصویر بعدی"
-                >
-                  <ChevronRight className="size-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goToPrev}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                  aria-label="تصویر قبلی"
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-              </>
-            )}
-
-            {/* Bottom Dots Indicator */}
-            {allGalleryImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                {allGalleryImages.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => changeSlide(i)}
-                    className={cn(
-                      "h-1.5 rounded-full transition-all duration-300",
-                      activeImageIdx === i
-                        ? "w-5 bg-brand shadow-[0_0_8px_rgba(255,45,60,0.8)]"
-                        : "w-1.5 bg-white/30 hover:bg-white/60"
-                    )}
-                    aria-label={`رفتن به تصویر ${i + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Thumbnail Gallery Strip */}
-          {allGalleryImages.length > 1 && (
-            <div
-              ref={thumbnailContainerRef}
-              className="no-scrollbar mt-4 flex items-center gap-3 overflow-x-auto pb-2 scroll-smooth"
-            >
-              {allGalleryImages.map((img, i) => {
-                const isActive = activeImageIdx === i;
-                return (
-                  <button
-                    key={img.id}
-                    type="button"
-                    onClick={() => changeSlide(i)}
-                    className={cn(
-                      "relative size-16 sm:size-20 shrink-0 overflow-hidden rounded-2xl border transition-all duration-300",
-                      isActive
-                        ? "border-brand shadow-[0_0_16px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40"
-                        : "border-white/10 opacity-50 hover:opacity-100 hover:border-white/30"
-                    )}
+              {/* Main Image Stage */}
+              <div className="relative aspect-[3/4] w-full max-w-[440px] xl:max-w-[480px] rounded-[36px] overflow-hidden border border-white/10 bg-[#08080c] shadow-[0_24px_80px_rgba(0,0,0,0.8),0_0_40px_rgba(255,45,60,0.15)] select-none">
+                <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                  <motion.div
+                    key={activeImageIdx}
+                    custom={direction}
+                    variants={imageVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(_, { offset, velocity }) => {
+                      const swipe = offset.x;
+                      if (swipe > 40 || velocity.x > 0.3) {
+                        goToNext();
+                      } else if (swipe < -40 || velocity.x < -0.3) {
+                        goToPrev();
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing flex items-center justify-center p-4"
                   >
                     <Image
-                      src={img.thumb_url || img.url}
-                      alt="تصویر محصول"
+                      src={activeImage}
+                      alt={product.name}
                       fill
-                      className="object-cover rounded-2xl"
+                      priority
+                      quality={90}
+                      sizes="(min-width: 1024px) 500px, 90vw"
+                      className="object-contain rounded-[32px] pointer-events-none drop-shadow-[0_16px_36px_rgba(0,0,0,0.7)]"
                     />
-                  </button>
-                );
-              })}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Top Badge Overlay */}
+                {discountPercent && (
+                  <span className="absolute top-4 right-4 bg-brand text-white text-xs font-black px-3 py-1 rounded-full shadow-[0_0_14px_rgba(255,45,60,0.6)] z-20 pointer-events-none">
+                    {discountPercent}% تخفیف ویژه
+                  </span>
+                )}
+
+                {/* Top Left Angle Label */}
+                {hasMultipleImages && (
+                  <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-bold text-white/90 shadow-lg pointer-events-none flex items-center gap-1.5">
+                    <Eye className="size-3 text-brand" />
+                    <span>
+                      {allGalleryImages[activeImageIdx]?.label || `زاویه ${toFaDigits(activeImageIdx + 1)}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Left/Right Navigation Arrows */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={goToNext}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
+                      aria-label="تصویر بعدی"
+                    >
+                      <ChevronRight className="size-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goToPrev}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
+                      aria-label="تصویر قبلی"
+                    >
+                      <ChevronLeft className="size-5" />
+                    </button>
+                  </>
+                )}
+
+                {/* Bottom Step Progress Line */}
+                {hasMultipleImages && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/12">
+                    {allGalleryImages.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => changeSlide(i)}
+                        className={cn(
+                          "h-1.5 rounded-full transition-all duration-300",
+                          activeImageIdx === i
+                            ? "w-6 bg-brand shadow-[0_0_10px_rgba(255,45,60,0.9)]"
+                            : "w-1.5 bg-white/30 hover:bg-white/70"
+                        )}
+                        aria-label={`زاویه ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Thumbnail Strip */}
+              {hasMultipleImages && (
+                <div
+                  ref={thumbnailContainerRef}
+                  className="mt-4 flex items-center gap-2.5 no-scrollbar max-w-[480px] overflow-x-auto p-1.5"
+                >
+                  {allGalleryImages.map((img, i) => {
+                    const isActive = activeImageIdx === i;
+                    return (
+                      <button
+                        key={img.id}
+                        type="button"
+                        onClick={() => changeSlide(i)}
+                        className={cn(
+                          "relative size-14 shrink-0 overflow-hidden rounded-xl border transition-all duration-200 bg-[#0c0c10]",
+                          isActive
+                            ? "border-brand shadow-[0_0_14px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40"
+                            : "border-white/10 opacity-50 hover:opacity-100 hover:border-white/30"
+                        )}
+                      >
+                        <Image
+                          src={img.thumb_url || img.url}
+                          alt="زاویه محصول"
+                          fill
+                          className="object-cover rounded-xl"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ─── COLUMN 3 (Left): Pricing & Sticky Order Actions ─── */}
+            <div className="col-span-3 text-right flex flex-col justify-center max-h-[82vh] overflow-y-auto no-scrollbar pl-2 py-4">
+              <div className="glass rounded-[28px] border border-white/10 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.5)]">
+                {/* Price Display */}
+                <div className="mb-5">
+                  <span className="text-[11px] text-white/40 block mb-1">قیمت نهایی</span>
+                  <div className="flex items-baseline gap-2.5">
+                    <span className="text-3xl font-black text-white tracking-tight">
+                      {formatToman(priceToman)}
+                    </span>
+                    <span className="text-xs text-white/50">تومان</span>
+                  </div>
+                  {compareAtToman && compareAtToman > priceToman && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-white/35 line-through">
+                        {formatToman(compareAtToman)}
+                      </span>
+                      <span className="text-[10px] font-bold text-brand bg-brand/10 border border-brand/20 px-2 py-0.5 rounded-md">
+                        {discountPercent}% تخفیف
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dynamic Options (Colors / Sizes / Styles) */}
+                {backendProduct?.options && backendProduct.options.length > 0 && (
+                  <div className="space-y-4 mb-6 border-t border-white/8 pt-4">
+                    {backendProduct.options.map((opt) => {
+                      const selectedValId = selectedOptionValues[opt.id];
+                      const currentVal = opt.values.find((v) => v.id === selectedValId)?.value;
+
+                      return (
+                        <div key={opt.id}>
+                          <div className="text-xs text-ink-3 mb-2 flex items-center justify-between">
+                            <span>{opt.name}:</span>
+                            <span className="font-bold text-white">{currentVal}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {opt.values.map((v) => {
+                              const active = v.id === selectedValId;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  onClick={() => handleOptionSelect(opt.id, v.id)}
+                                  className={cn(
+                                    "relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                                    active
+                                      ? "glass-brand text-white border-brand/50 shadow-[0_0_12px_rgba(255,45,60,0.3)] ring-1 ring-brand"
+                                      : "glass text-ink-3 hover:text-white hover:border-white/20"
+                                  )}
+                                >
+                                  {v.image && (
+                                    <img
+                                      src={v.image.thumb_url || v.image.url}
+                                      alt={v.value}
+                                      className="size-4 rounded-full object-cover ring-1 ring-white/20"
+                                    />
+                                  )}
+                                  <span>{v.value}</span>
+                                  {active && <Check className="size-3 text-white" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Stock Status */}
+                <div className="mb-5 text-xs">
+                  {!inStock ? (
+                    <span className="font-bold text-rose-500">ناموجود در انبار</span>
+                  ) : stockQty !== null && stockQty <= 3 ? (
+                    <span className="font-bold text-amber-400">
+                      تنها {toFaDigits(stockQty)} عدد در انبار باقی مانده است
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400 font-medium">موجود در انبار و آماده ارسال</span>
+                  )}
+                </div>
+
+                {/* Quantity Controls & CTA Button */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-white/50">تعداد:</span>
+                    <div className="glass flex items-center rounded-xl p-0.5 border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        className="text-ink-3 hover:text-white size-8 grid place-items-center rounded-lg transition-colors active:scale-90"
+                        aria-label="کاهش تعداد"
+                      >
+                        <Minus className="size-3.5" />
+                      </button>
+                      <span className="min-w-[28px] text-center font-bold text-xs text-white">
+                        {toFaDigits(qty)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => (stockQty ? Math.min(stockQty, q + 1) : q + 1))}
+                        className="text-ink-3 hover:text-white size-8 grid place-items-center rounded-lg transition-colors active:scale-90"
+                        aria-label="افزایش تعداد"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    disabled={!inStock}
+                    onClick={handleAddToCart}
+                    whileTap={{ scale: 0.96 }}
+                    className={cn(
+                      "w-full rounded-2xl py-3.5 text-sm font-black transition-all duration-300 shadow-[0_8px_30px_rgba(255,45,60,0.35)] flex items-center justify-center gap-2",
+                      inStock
+                        ? "bg-gradient-to-r from-brand to-[#e01627] text-white hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(255,45,60,0.55)] cursor-pointer"
+                        : "bg-white/10 text-white/40 cursor-not-allowed"
+                    )}
+                  >
+                    <ShoppingBag className="size-4" />
+                    <span>{inStock ? "افزودن به سبد خرید" : "ناموجود"}</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ─── MOBILE VIEW: Sticky Dynamic Stage with Smooth Touch Carousel ─── */}
+      <div className="block lg:hidden px-4 pt-2 pb-32">
+        {/* Main Image Slider Viewport */}
+        <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] bg-[#09090c] select-none mb-4">
+          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+            <motion.div
+              key={activeImageIdx}
+              custom={direction}
+              variants={imageVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, { offset, velocity }) => {
+                const swipe = offset.x;
+                if (swipe > 40 || velocity.x > 0.3) {
+                  goToNext();
+                } else if (swipe < -40 || velocity.x < -0.3) {
+                  goToPrev();
+                }
+              }}
+              className="absolute inset-0 cursor-grab active:cursor-grabbing w-full h-full p-3 flex items-center justify-center"
+            >
+              <Image
+                src={activeImage}
+                alt={product.name}
+                fill
+                priority
+                sizes="90vw"
+                className="object-contain rounded-[24px] pointer-events-none"
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Top Badges */}
+          {discountPercent ? (
+            <span className="absolute top-3 right-3 bg-brand text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-md z-20 pointer-events-none">
+              {discountPercent}% تخفیف
+            </span>
+          ) : product.badge ? (
+            <span className="glass-brand absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md z-20 pointer-events-none">
+              {product.badge}
+            </span>
+          ) : null}
+
+          {/* Top Left Slide Indicator */}
+          {hasMultipleImages && (
+            <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white/90 shadow-md pointer-events-none">
+              {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
             </div>
           )}
 
-          {/* Value props badges */}
-          <div className="mt-5 flex items-center justify-around rounded-2xl bg-white/[0.03] border border-white/6 p-3.5 text-[11.5px] text-ink-3">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="size-4 text-emerald-400" /> رنگ ثابت و ضدحساسیت
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Truck className="size-4 text-brand" /> ارسال سریع سراسر ایران
-            </span>
-            <span className="flex items-center gap-1.5">
-              <RotateCcw className="size-4 text-amber-400" /> ۷ روز ضمانت بازگشت
-            </span>
-          </div>
+          {/* Arrow Buttons */}
+          {hasMultipleImages && (
+            <>
+              <button
+                type="button"
+                onClick={goToNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 size-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white active:scale-90"
+                aria-label="تصویر بعدی"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={goToPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 size-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white active:scale-90"
+                aria-label="تصویر قبلی"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+            </>
+          )}
+
+          {/* Dots Indicator */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+              {allGalleryImages.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => changeSlide(i)}
+                  className={cn(
+                    "h-1 rounded-full transition-all duration-300",
+                    activeImageIdx === i ? "w-4 bg-brand" : "w-1 bg-white/30"
+                  )}
+                  aria-label={`اسلاید ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* ── Right/Bottom: Details, Options, & Checkout ── */}
-        <div className="px-5 pt-8 lg:flex-1 lg:px-0 lg:pt-0">
-          <div className="flex items-center gap-2.5 text-[11.5px]">
-            <span className="glass text-ink-2 rounded-full px-3 py-1 font-bold">
-              {product.cat}
-            </span>
-            <span className="glass-brand flex items-center gap-1 rounded-full px-3 py-1 font-bold text-white">
+        {/* Thumbnail Gallery Strip */}
+        {hasMultipleImages && (
+          <div
+            ref={thumbnailContainerRef}
+            className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-2 scroll-smooth mb-4"
+          >
+            {allGalleryImages.map((img, i) => {
+              const isActive = activeImageIdx === i;
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => changeSlide(i)}
+                  className={cn(
+                    "relative size-14 shrink-0 overflow-hidden rounded-xl border transition-all duration-200",
+                    isActive
+                      ? "border-brand shadow-[0_0_12px_rgba(255,45,60,0.5)] scale-105"
+                      : "border-white/10 opacity-50"
+                  )}
+                >
+                  <Image
+                    src={img.thumb_url || img.url}
+                    alt="تصویر محصول"
+                    fill
+                    className="object-cover rounded-xl"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Product Title & Info */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2 text-xs">
+            <span className="glass-brand flex items-center gap-1 rounded-full px-2.5 py-0.5 font-bold text-white">
               <Star className="size-3 fill-current" />
               {toFaDigits(product.rating || 4.9)}
             </span>
+            <span className="glass text-ink-3 rounded-full px-2.5 py-0.5">
+              {product.cat}
+            </span>
           </div>
 
-          <h1 className="mt-4 text-[28px] leading-[1.3] font-black text-white lg:text-[36px]">
+          <h1 className="text-xl font-black text-white leading-tight mb-2">
             {product.name}
           </h1>
 
-          {/* Pricing Box */}
-          <div className="mt-5 flex items-baseline gap-3">
-            <div className="text-[30px] lg:text-[34px] font-black text-white">
-              {formatToman(priceToman)}{" "}
-              <span className="text-ink-4 text-[13px] font-normal">تومان</span>
-            </div>
+          {/* Pricing */}
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-2xl font-black text-white">
+              {formatToman(priceToman)}
+            </span>
+            <span className="text-xs text-white/50">تومان</span>
             {compareAtToman && compareAtToman > priceToman && (
-              <div className="text-ink-5 text-[15px] line-through">
+              <span className="text-xs text-white/35 line-through mr-1">
                 {formatToman(compareAtToman)}
-              </div>
+              </span>
             )}
           </div>
-
-          {/* Dynamic Variant Options (Colors / Flavors / Sizes) */}
-          {backendProduct?.options && backendProduct.options.length > 0 && (
-            <div className="space-y-6 mt-6 pt-6 border-t border-white/8">
-              {backendProduct.options.map((opt) => {
-                const selectedValId = selectedOptionValues[opt.id];
-                const currentVal = opt.values.find((v) => v.id === selectedValId)?.value;
-
-                return (
-                  <div key={opt.id}>
-                    <div className="text-ink-3 mb-3 text-[13px]">
-                      {opt.name}: <span className="font-bold text-white">{currentVal}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2.5">
-                      {opt.values.map((v) => {
-                        const active = v.id === selectedValId;
-                        return (
-                          <motion.button
-                            key={v.id}
-                            type="button"
-                            onClick={() => handleOptionSelect(opt.id, v.id)}
-                            whileTap={{ scale: 0.94 }}
-                            className={cn(
-                              "relative flex items-center gap-2 rounded-2xl px-4 py-2.5 text-[12.5px] font-bold transition-all",
-                              active
-                                ? "glass-brand text-white border-brand/50 shadow-[0_0_18px_rgba(255,45,60,0.3)] ring-1 ring-brand"
-                                : "glass text-ink-3 hover:text-white hover:border-white/20"
-                            )}
-                          >
-                            {v.image && (
-                              <img
-                                src={v.image.thumb_url || v.image.url}
-                                alt={v.value}
-                                className="size-5 rounded-full object-cover ring-1 ring-white/20"
-                              />
-                            )}
-                            <span>{v.value}</span>
-                            {active && <Check className="size-3.5 ml-0.5 text-white" />}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Stock Notification */}
-          <div className="mt-5 text-[12px]">
-            {!inStock ? (
-              <span className="font-bold text-rose-500">ناموجود در انبار</span>
-            ) : stockQty !== null && stockQty <= 3 ? (
-              <span className="font-bold text-amber-400">
-                تنها {toFaDigits(stockQty)} عدد در انبار باقی مانده است
-              </span>
-            ) : (
-              <span className="text-emerald-400 font-medium">موجود در انبار</span>
-            )}
-          </div>
-
-          {/* Quantity & Add to Cart */}
-          <div className="mt-6 flex items-center gap-3">
-            <div className="glass flex items-center rounded-2xl p-1 border border-white/8">
-              <button
-                type="button"
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="text-ink-3 hover:text-white grid size-9 place-items-center rounded-xl transition-colors"
-                aria-label="کاهش تعداد"
-              >
-                <Minus className="size-4" />
-              </button>
-              <span className="text-ink-1 min-w-[32px] text-center font-bold text-sm">
-                {toFaDigits(qty)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setQty((q) => (stockQty ? Math.min(stockQty, q + 1) : q + 1))}
-                className="text-ink-3 hover:text-white grid size-9 place-items-center rounded-xl transition-colors"
-                aria-label="افزایش تعداد"
-              >
-                <Plus className="size-4" />
-              </button>
-            </div>
-
-            <motion.button
-              type="button"
-              disabled={!inStock}
-              onClick={handleAddToCart}
-              whileTap={{ scale: 0.96 }}
-              className={cn(
-                "flex-1 rounded-2xl py-3.5 text-sm font-black transition-all duration-300 shadow-[0_8px_30px_rgba(255,45,60,0.35)]",
-                inStock
-                  ? "bg-gradient-to-r from-brand to-[#e01627] text-white hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(255,45,60,0.55)]"
-                  : "bg-white/10 text-white/40 cursor-not-allowed"
-              )}
-            >
-              {inStock ? "افزودن به سبد خرید" : "ناموجود"}
-            </motion.button>
-          </div>
-
-          {/* Description */}
-          {product.description && (
-            <Reveal className="mt-8 pt-6 border-t border-white/8">
-              <h3 className="mb-3 text-[16px] font-black text-white">توضیحات محصول</h3>
-              <p className="text-ink-3 text-[13.5px] leading-loose whitespace-pre-line">
-                {product.description}
-              </p>
-            </Reveal>
-          )}
-
-          {/* Specs */}
-          {product.specs && product.specs.length > 0 && (
-            <Reveal className="mt-6">
-              <div className="glass divide-y divide-white/8 overflow-hidden rounded-3xl border border-white/8">
-                {product.specs.map((s) => (
-                  <div key={s.k} className="flex justify-between px-5 py-3.5 text-[12.5px]">
-                    <span className="text-ink-4">{s.k}</span>
-                    <span className="text-ink-1 font-medium">{s.v}</span>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          )}
         </div>
-      </div>
 
-      {/* ── Related Products (Disabled until backend implementation) ── */}
-      {/*
-      {relatedProducts && relatedProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto pt-16 lg:pt-24 lg:px-12">
-          <Reveal className="px-5 pb-4 lg:px-0">
-            <h3 className="text-[19px] font-black text-white lg:text-[26px]">
-              محصولات مرتبط و پیشنهادی
-            </h3>
-          </Reveal>
-          <div
-            className="no-scrollbar flex gap-3.5 overflow-x-auto px-5 pb-3 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0"
-            style={{ scrollSnapType: "x mandatory" }}
-          >
-            {relatedProducts.map((p) => (
-              <div key={p.id} className="w-[185px] shrink-0 lg:w-auto" style={{ scrollSnapAlign: "start" }}>
-                <ProductCard product={p} />
+        {/* Mobile Variant Options */}
+        {backendProduct?.options && backendProduct.options.length > 0 && (
+          <div className="glass rounded-2xl p-4 border border-white/8 space-y-4 mb-4">
+            {backendProduct.options.map((opt) => {
+              const selectedValId = selectedOptionValues[opt.id];
+              const currentVal = opt.values.find((v) => v.id === selectedValId)?.value;
+
+              return (
+                <div key={opt.id}>
+                  <div className="text-xs text-ink-3 mb-2">
+                    {opt.name}: <span className="font-bold text-white">{currentVal}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {opt.values.map((v) => {
+                      const active = v.id === selectedValId;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          onClick={() => handleOptionSelect(opt.id, v.id)}
+                          className={cn(
+                            "relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                            active
+                              ? "glass-brand text-white border-brand/50 ring-1 ring-brand"
+                              : "glass text-ink-3 hover:text-white"
+                          )}
+                        >
+                          {v.image && (
+                            <img
+                              src={v.image.thumb_url || v.image.url}
+                              alt={v.value}
+                              className="size-4 rounded-full object-cover"
+                            />
+                          )}
+                          <span>{v.value}</span>
+                          {active && <Check className="size-3 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Description & Specs on Mobile */}
+        {product.description && (
+          <div className="glass rounded-2xl p-4 border border-white/8 mb-4">
+            <h3 className="text-xs font-bold text-white mb-2">توضیحات</h3>
+            <p className="text-ink-3 text-xs leading-relaxed whitespace-pre-line">
+              {product.description}
+            </p>
+          </div>
+        )}
+
+        {product.specs && product.specs.length > 0 && (
+          <div className="glass rounded-2xl border border-white/8 divide-y divide-white/6 overflow-hidden mb-4">
+            {product.specs.map((s) => (
+              <div key={s.k} className="flex justify-between px-3.5 py-2.5 text-xs">
+                <span className="text-ink-4">{s.k}</span>
+                <span className="text-ink-1 font-semibold">{s.v}</span>
               </div>
             ))}
           </div>
-        </section>
-      )}
-      */}
+        )}
+
+        {/* Mobile Sticky Bottom Floating Action Bar */}
+        <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
+          <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] text-white/40 block">قیمت نهایی</span>
+              <span className="text-base font-extrabold text-white">
+                {formatToman(priceToman)}{" "}
+                <span className="text-[9px] text-white/50">تومان</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="glass flex items-center rounded-xl p-0.5 border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  className="text-ink-3 hover:text-white size-7 grid place-items-center rounded-lg"
+                  aria-label="کاهش"
+                >
+                  <Minus className="size-3" />
+                </button>
+                <span className="min-w-[20px] text-center font-bold text-xs text-white">
+                  {toFaDigits(qty)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => (stockQty ? Math.min(stockQty, q + 1) : q + 1))}
+                  className="text-ink-3 hover:text-white size-7 grid place-items-center rounded-lg"
+                  aria-label="افزایش"
+                >
+                  <Plus className="size-3" />
+                </button>
+              </div>
+
+              <motion.button
+                type="button"
+                disabled={!inStock}
+                onClick={handleAddToCart}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-xs font-black shadow-[0_4px_16px_rgba(255,45,60,0.4)] flex items-center gap-1.5",
+                  inStock
+                    ? "bg-brand text-white"
+                    : "bg-white/10 text-white/40 cursor-not-allowed"
+                )}
+              >
+                <ShoppingBag className="size-3.5" />
+                <span>{inStock ? "خرید" : "ناموجود"}</span>
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
