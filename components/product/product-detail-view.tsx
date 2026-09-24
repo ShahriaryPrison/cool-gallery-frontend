@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 const slideVariants: Variants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 120 : -120,
+    x: direction > 0 ? -120 : 120,
     opacity: 0,
     scale: 0.97,
   }),
@@ -36,7 +36,7 @@ const slideVariants: Variants = {
   },
   exit: (direction: number) => ({
     zIndex: 0,
-    x: direction < 0 ? 120 : -120,
+    x: direction > 0 ? 120 : -120,
     opacity: 0,
     scale: 0.97,
     transition: {
@@ -254,9 +254,9 @@ export function ProductDetailView({
                 dragElastic={0.2}
                 onDragEnd={(_, { offset, velocity }) => {
                   const swipe = offset.x;
-                  if (swipe < -40 || velocity.x < -0.3) {
+                  if (swipe > 40 || velocity.x > 0.3) {
                     goToNext();
-                  } else if (swipe > 40 || velocity.x > 0.3) {
+                  } else if (swipe < -40 || velocity.x < -0.3) {
                     goToPrev();
                   }
                 }}
@@ -292,17 +292,17 @@ export function ProductDetailView({
               <>
                 <button
                   type="button"
-                  onClick={goToPrev}
+                  onClick={goToNext}
                   className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                  aria-label="تصویر قبلی"
+                  aria-label="تصویر بعدی"
                 >
                   <ChevronRight className="size-5" />
                 </button>
                 <button
                   type="button"
-                  onClick={goToNext}
+                  onClick={goToPrev}
                   className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
-                  aria-label="تصویر بعدی"
+                  aria-label="تصویر قبلی"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
