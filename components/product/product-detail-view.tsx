@@ -19,13 +19,13 @@ import { cn } from "@/lib/utils";
 interface ProductDetailViewProps {
   product: Product;
   backendProduct?: ProductDetail | null;
-  relatedProducts: Product[];
+  relatedProducts?: Product[];
 }
 
 export function ProductDetailView({
   product,
   backendProduct,
-  relatedProducts,
+  relatedProducts = [],
 }: ProductDetailViewProps) {
   const cart = useCart();
   const [qty, setQty] = useState(1);
@@ -406,8 +406,9 @@ export function ProductDetailView({
         </div>
       </div>
 
-      {/* ── Related Products ── */}
-      {relatedProducts.length > 0 && (
+      {/* ── Related Products (Disabled until backend implementation) ── */}
+      {/*
+      {relatedProducts && relatedProducts.length > 0 && (
         <section className="max-w-7xl mx-auto pt-16 lg:pt-24 lg:px-12">
           <Reveal className="px-5 pb-4 lg:px-0">
             <h3 className="text-[19px] font-black text-white lg:text-[26px]">
@@ -426,6 +427,7 @@ export function ProductDetailView({
           </div>
         </section>
       )}
+      */}
     </div>
   );
 }

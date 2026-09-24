@@ -93,14 +93,10 @@ export default async function ProductPage({
     ],
   };
 
-  // Related products
-  let relatedProducts = getRelatedProducts(displayProduct, 4);
-
   return (
     <ProductDetailView
       product={displayProduct}
       backendProduct={backendProduct}
-      relatedProducts={relatedProducts}
     />
   );
 }
