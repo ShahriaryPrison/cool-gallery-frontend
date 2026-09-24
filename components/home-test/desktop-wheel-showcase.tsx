@@ -143,11 +143,15 @@ export function DesktopWheelShowcase({
             </AnimatePresence>
 
             {/* Badge */}
-            {products[active]?.badge && (
+            {products[active]?.oldPrice && products[active].oldPrice! > products[active].price ? (
+              <span className="absolute top-28 left-10 bg-brand text-white text-sm font-black px-4 py-2 rounded-full z-30 shadow-[0_0_16px_rgba(255,45,60,0.6)]">
+                {Math.round(((products[active].oldPrice! - products[active].price) / products[active].oldPrice!) * 100)}%
+              </span>
+            ) : products[active]?.badge ? (
               <span className="absolute top-28 left-10 bg-white/10 backdrop-blur-md border border-white/15 text-white text-xs font-bold px-4 py-2 rounded-full z-30">
                 {products[active].badge}
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* ── RIGHT: Text content ── */}
@@ -162,6 +166,8 @@ export function DesktopWheelShowcase({
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-center gap-4 mb-5"
               >
+                <span className="text-brand font-black text-sm">/ آف ویژه</span>
+                <span className="h-px w-8 bg-white/20" />
                 <span className="cinematic-counter text-xs text-white/30 tracking-[0.3em] uppercase">
                   FRAME {COUNTER[active]}/{COUNTER[products.length - 1]}
                 </span>
@@ -202,12 +208,12 @@ export function DesktopWheelShowcase({
 
             {/* Price & Specs */}
             <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-3xl font-black text-white">
+              <span className="text-3xl font-black text-brand">
                 {formatToman(products[active]?.price ?? 0)}
               </span>
               <span className="text-sm text-white/50">تومان</span>
               {products[active]?.oldPrice && (
-                <span className="text-sm text-white/30 line-through mr-2">
+                <span className="text-base text-white/40 line-through mr-2">
                   {formatToman(products[active].oldPrice)}
                 </span>
               )}

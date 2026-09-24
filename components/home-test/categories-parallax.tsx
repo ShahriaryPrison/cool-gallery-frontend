@@ -1,7 +1,27 @@
 "use client";
 
 import { motion, type Variants } from "motion/react";
-import { Gem, Link as LinkIcon, Target, Sparkles, Star, Aperture, KeyRound, Gift, ChevronLeft } from "lucide-react";
+import {
+  Gem,
+  Link as LinkIcon,
+  Target,
+  Sparkles,
+  Star,
+  Aperture,
+  KeyRound,
+  Gift,
+  ChevronLeft,
+  Crown,
+  ShoppingBag,
+  Bot,
+  Flame,
+  Zap,
+  Droplets,
+  Cpu,
+  Watch,
+  CreditCard,
+  type LucideIcon,
+} from "lucide-react";
 
 // داده‌های پیش‌فرض
 const DEFAULT_CATEGORY_DATA = [
@@ -15,7 +35,7 @@ const DEFAULT_CATEGORY_DATA = [
   { title: "ست هدیه", subtitle: "بسته‌بندی اختصاصی", icon: Gift, slug: "gift-sets" },
 ];
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   گردنبند: Gem,
   دستبند: LinkIcon,
   انگشتر: Target,
@@ -23,7 +43,38 @@ const ICON_MAP: Record<string, any> = {
   پیرسینگ: Star,
   فیجت: Aperture,
   جاکلیدی: KeyRound,
+  جاکارتی: CreditCard,
   "ست هدیه": Gift,
+  کلاه: Crown,
+  کیف: ShoppingBag,
+  فیگور: Bot,
+  پاد: Flame,
+  "پاد دائمی": Zap,
+  "پاد یکبار مصرف": Flame,
+  سالت: Droplets,
+  "کویل و کارتریج": Cpu,
+  ساعت: Watch,
+};
+
+const SUBTITLE_MAP: Record<string, string> = {
+  کلاه: "اسپرت، بیسبالی و بافت",
+  کیف: "دوشی، کمری و چرم",
+  فیگور: "اکشن فیگور و ماکت خاص",
+  پاد: "پاد سیستم و ویپ اورجینال",
+  "پاد دائمی": "پاد ماد و ویپ شارژی",
+  "پاد یکبار مصرف": "پاف و طعم‌های جذاب",
+  سالت: "سالت نیکوتین و ایجوس",
+  "کویل و کارتریج": "لوازم یدکی و مصرفی",
+  گردنبند: "استیل ۳۱۶ و گوتیک",
+  دستبند: "کارتیر، چرم و کوبایی",
+  انگشتر: "اسکلت، نگین و دارک",
+  گوشواره: "طرح‌های خاص و دارک",
+  پیرسینگ: "ضدحساسیت و مینیمال",
+  فیجت: "مفصلی و ضد استرس",
+  جاکلیدی: "فلزی و چرم طبیعی",
+  جاکارتی: "چرم طبیعی و فلزی",
+  "ست هدیه": "بسته‌بندی اختصاصی کادو",
+  ساعت: "اسپرت و وینتیج",
 };
 
 // تنظیمات انیمیشن کانتینر
@@ -57,17 +108,18 @@ export function CategoriesParallax({
         const found = DEFAULT_CATEGORY_DATA.find((d) => d.title === c.name || d.slug === c.slug);
         return {
           title: c.name,
-          subtitle: found?.subtitle || "کالکشن دست‌چین و خاص",
+          subtitle: SUBTITLE_MAP[c.name] || found?.subtitle || "کالکشن دست‌چین و خاص",
           icon: ICON_MAP[c.name] || found?.icon || Gem,
           slug: c.slug,
         };
       })
     : DEFAULT_CATEGORY_DATA;
+
   return (
     <section className="relative py-24 lg:py-32 px-6 lg:px-12 bg-surface-0 z-20">
-      <div className="max-w-[1200px] mx-auto">
+      <div dir="rtl" className="max-w-[1200px] mx-auto">
         
-        {/* هدر بخش */}
+        {/* هدر بخش (راست: عنوان، چپ: مشاهده همه) */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -75,15 +127,22 @@ export function CategoriesParallax({
           viewport={{ once: true, amount: 0.2 }}
           className="flex items-center justify-between mb-10 lg:mb-16 pb-4"
         >
+          <div className="text-right">
+            <span className="text-brand text-[11px] font-bold tracking-[0.25em] uppercase block mb-1">
+              CATEGORIES
+            </span>
+            <h2 className="text-2xl lg:text-4xl font-extrabold text-white">
+              دسته‌بندی محصولات
+            </h2>
+          </div>
+
           <a 
             href="/categories" 
-            className="text-[#ff2d3c] text-xs lg:text-sm font-bold hover:text-white transition-colors"
+            className="group inline-flex items-center gap-1.5 text-brand text-xs lg:text-sm font-bold bg-brand/10 hover:bg-brand/20 border border-brand/30 px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(255,45,60,0.15)]"
           >
-            مشاهده همه
+            <span>مشاهده همه</span>
+            <ChevronLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
           </a>
-          <h2 className="text-2xl lg:text-4xl font-extrabold text-white">
-            دسته‌بندی محصولات
-          </h2>
         </motion.div>
 
         {/* گرید دسته‌بندی‌ها — دو ستونه در موبایل و چهار ستونه در دسکتاپ */}

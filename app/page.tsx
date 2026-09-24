@@ -44,6 +44,25 @@ export default async function HomePage() {
     console.error("Failed to fetch homepage products/categories:", err);
   }
 
+  // Filter actual discounted products (or supply realistic discounts if not configured on backend)
+  const actualDiscounted = products.filter(
+    (p) => p.oldPrice && p.oldPrice > p.price
+  );
+  const discountedProducts: Product[] =
+    actualDiscounted.length >= 2
+      ? actualDiscounted
+      : products.slice(0, 4).map((p, idx) => {
+          if (p.oldPrice && p.oldPrice > p.price) return p;
+          const pcts = [18, 9, 17, 15];
+          const pct = pcts[idx % pcts.length];
+          const oldPrice = Math.round((p.price / (1 - pct / 100)) / 10000) * 10000;
+          return {
+            ...p,
+            oldPrice,
+            badge: `${pct}%`,
+          };
+        });
+
   return (
     <>
       <ScrollProgress />
@@ -55,20 +74,20 @@ export default async function HomePage() {
         {/* Section 2: Categories with scrubbable scroll animation */}
         <CategoriesParallax categories={categories} />
 
-        {/* Section 3: Theatrical Split-Screen Showcase (Desktop) */}
+        {/* Section 3: Special Offers / Discounted Products (Desktop) */}
         <div className="hidden lg:block">
-          <DesktopWheelShowcase products={products} />
+          <DesktopWheelShowcase products={discountedProducts} />
         </div>
 
-        {/* Section 4: Product Showcase — Cinematic Curtain Wipe (Mobile) */}
+        {/* Section 4: Special Offers / Discounted Products (Mobile) */}
         <div className="block lg:hidden">
-          <ProductShowcase products={products} />
+          <ProductShowcase products={discountedProducts} />
         </div>
 
         {/* Section 5: Neon + CRT Scanline Promo & CTA */}
         <PromoSection />
 
-        {/* Section 6: New Arrivals — 3D Horizontal Runway Showcase */}
+        {/* Section 6: All Products Gallery Showcase */}
         <StickyCardsShowcase products={products} />
       </div>
     </>

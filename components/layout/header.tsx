@@ -187,7 +187,7 @@ export function Header() {
         <div
           className={cn(
             "flex items-center justify-start transition-all duration-500",
-            showHeaderLogo ? "min-w-[100px] lg:min-w-[130px]" : "w-0 min-w-0 overflow-hidden"
+            showHeaderLogo ? "min-w-[130px] lg:min-w-[160px]" : "w-0 min-w-0 overflow-hidden"
           )}
         >
           <AnimatePresence mode="wait">
@@ -202,7 +202,7 @@ export function Header() {
                 <Link
                   href="/"
                   aria-label="COOL Gallery"
-                  className="shrink-0 flex items-center justify-center"
+                  className="shrink-0 flex items-center justify-center py-1"
                 >
                   <Image
                     src="/logo.png"
@@ -210,7 +210,7 @@ export function Header() {
                     width={868}
                     height={336}
                     priority
-                    className="h-9 w-auto drop-shadow-[0_0_18px_rgba(255,45,60,0.45)] sm:h-10 lg:h-11"
+                    className="h-12 w-auto drop-shadow-[0_0_24px_rgba(255,45,60,0.65)] sm:h-14 lg:h-16"
                   />
                 </Link>
               </motion.div>

@@ -8,7 +8,7 @@ export type Category =
   | "جاکلیدی"
   | "ست هدیه";
 
-export type ProductBadge = "پرفروش" | "جدید" | "تخفیف" | "";
+export type ProductBadge = "پرفروش" | "جدید" | "تخفیف" | string;
 
 export interface Product {
   id: string;

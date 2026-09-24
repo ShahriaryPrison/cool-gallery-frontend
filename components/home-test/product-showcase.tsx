@@ -53,13 +53,13 @@ export function ProductShowcase({
       <div className="px-6 mb-8 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles className="size-3.5 text-brand" />
-            <span className="text-[11px] font-semibold tracking-[0.25em] text-white/40 uppercase">
-              کالکشن ویژه
+            <span className="text-brand font-black text-sm">/</span>
+            <span className="text-[11px] font-bold tracking-[0.2em] text-brand uppercase">
+              آف ویژه
             </span>
           </div>
           <h2 className="text-2xl font-black text-white">
-            شاهکارهای گالری
+            محصولات تخفیف‌دار
           </h2>
         </div>
 
@@ -88,6 +88,9 @@ export function ProductShowcase({
         {products.map((product, i) => {
           const theme = THEMES[i % THEMES.length];
           const isActive = activeIdx === i;
+          const discountPct = product.oldPrice && product.oldPrice > product.price
+            ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
+            : null;
 
           return (
             <div
@@ -125,11 +128,15 @@ export function ProductShowcase({
                   sizes="(max-width: 768px) 340px, 400px"
                   className="object-cover rounded-[24px] transition-transform duration-500 hover:scale-105"
                 />
-                {product.badge && (
-                  <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg">
+                {discountPct ? (
+                  <span className="absolute top-2.5 right-2.5 bg-brand text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-[0_0_12px_rgba(255,45,60,0.6)] z-10">
+                    {discountPct}%
+                  </span>
+                ) : product.badge ? (
+                  <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg z-10">
                     {product.badge}
                   </span>
-                )}
+                ) : null}
               </div>
 
               {/* Info */}
@@ -164,7 +171,7 @@ export function ProductShowcase({
                         {formatToman(product.oldPrice)}
                       </span>
                     )}
-                    <span className="text-base font-black text-white">
+                    <span className="text-base font-black text-brand">
                       {formatToman(product.price)}{" "}
                       <span className="text-[10px] font-normal text-white/40">تومان</span>
                     </span>

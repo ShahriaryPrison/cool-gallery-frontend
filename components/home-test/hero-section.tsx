@@ -92,7 +92,7 @@ export function HeroSection() {
                 width={868}
                 height={336}
                 priority
-                className="h-12 w-auto drop-shadow-[0_0_30px_rgba(255,45,60,0.55)] sm:h-16 lg:h-22"
+                className="h-20 w-auto drop-shadow-[0_0_45px_rgba(255,45,60,0.75)] sm:h-28 lg:h-36"
               />
             </span>
             <motion.span

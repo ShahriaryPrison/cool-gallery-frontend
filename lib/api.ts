@@ -262,6 +262,10 @@ export function transformProductSummary(
   const oldPriceToman = defaultVar?.compare_at_price
     ? irrToToman(defaultVar.compare_at_price)
     : undefined;
+  const discountPercent =
+    oldPriceToman && oldPriceToman > priceToman
+      ? Math.round(((oldPriceToman - priceToman) / oldPriceToman) * 100)
+      : undefined;
   const image = p.images?.[0]?.url || "/products/fidget-dragon-black.png";
 
   const resolvedCat =
@@ -275,7 +279,7 @@ export function transformProductSummary(
     cat: resolvedCat as any,
     price: priceToman,
     oldPrice: oldPriceToman,
-    badge: oldPriceToman ? "تخفیف" : "جدید",
+    badge: discountPercent ? `${discountPercent}%` : "جدید",
     image: image,
     popularity: 95,
     rating: 4.9,
