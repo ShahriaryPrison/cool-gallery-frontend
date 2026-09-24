@@ -87,8 +87,8 @@ export default async function HomePage() {
         {/* Section 5: Neon + CRT Scanline Promo & CTA */}
         <PromoSection />
 
-        {/* Section 6: All Products Gallery Showcase */}
-        <StickyCardsShowcase products={products} />
+        {/* Section 6: All Products Gallery Showcase (Top 10 Products) */}
+        <StickyCardsShowcase products={products.slice(0, 10)} />
       </div>
     </>
   );

@@ -15,7 +15,7 @@ export function StickyCardsShowcase({
 }: {
   products?: Product[];
 }) {
-  const products = initialProducts && initialProducts.length > 0 ? initialProducts : getBestSellers(12);
+  const products = (initialProducts && initialProducts.length > 0 ? initialProducts : getBestSellers(10)).slice(0, 10);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [maxTranslate, setMaxTranslate] = useState(0);
@@ -29,15 +29,17 @@ export function StickyCardsShowcase({
     function measure() {
       if (!trackRef.current) return;
       const trackWidth = trackRef.current.scrollWidth;
-      setMaxTranslate(Math.max(0, trackWidth - window.innerWidth));
+      // Generous clearance ensures the last "View All" card easily glides to full view
+      const clearance = window.innerWidth * 0.18;
+      setMaxTranslate(Math.max(0, trackWidth - window.innerWidth + clearance));
     }
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, [products.length]);
 
-  const rawX = useTransform(scrollYProgress, [0, 1], [0, -maxTranslate]);
-  const smoothX = useSpring(rawX, { stiffness: 90, damping: 30, restDelta: 0.5 });
+  const rawX = useTransform(scrollYProgress, [0, 0.92], [0, -maxTranslate]);
+  const smoothX = useSpring(rawX, { stiffness: 85, damping: 25, restDelta: 0.5 });
 
   return (
     <section className="relative w-full bg-surface-0 z-20 pb-16 lg:pb-0">
@@ -180,7 +182,7 @@ export function StickyCardsShowcase({
 
           <motion.div
             ref={trackRef}
-            className="flex items-center gap-6 lg:gap-12 px-[7vw] lg:px-[12vw]"
+            className="flex items-center gap-6 lg:gap-12 pl-[7vw] pr-[20vw] lg:pl-[12vw] lg:pr-[28vw]"
             style={{ x: smoothX }}
           >
             {products.map((product, i) => (
