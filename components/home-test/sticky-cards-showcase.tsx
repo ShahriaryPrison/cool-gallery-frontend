@@ -98,15 +98,15 @@ export function StickyCardsShowcase({
                       <span className="absolute top-2.5 right-2.5 bg-brand text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(255,45,60,0.5)] z-10">
                         {discountPct}%
                       </span>
-                    ) : product.badge ? (
+                    ) : product.badge && product.badge !== "جدید" ? (
                       <span className="absolute top-2.5 right-2.5 border border-white/20 bg-black/50 backdrop-blur-md text-white text-[9.5px] font-bold px-2.5 py-0.5 rounded-full z-10">
                         {product.badge}
                       </span>
                     ) : null}
                   </div>
 
-                  <span className="text-white/35 text-[10px] tracking-wider block mb-1">
-                    N.{COUNTER[i % COUNTER.length]} — {product.cat}
+                  <span className="text-white/35 text-[10.5px] font-medium block mb-1">
+                    {product.cat}
                   </span>
                   <h3 className="text-base font-bold text-white leading-snug line-clamp-1 mb-1.5">
                     {product.name}
@@ -164,15 +164,12 @@ export function StickyCardsShowcase({
       {/* ─── DESKTOP VIEW: 3D Horizontal Runway Showcase ─── */}
       <div
         ref={containerRef}
-        style={{ height: `${products.length * 100}vh` }}
+        style={{ height: `${(products.length + 1) * 85}vh` }}
         className="relative hidden lg:block"
       >
         <div dir="ltr" className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center bg-surface-0">
-          {/* Status bar */}
+          {/* Subtle Progress Bar */}
           <div dir="rtl" className="absolute top-8 left-6 right-6 lg:top-12 lg:left-16 lg:right-16 z-30 flex items-center gap-5">
-            <span className="text-xs text-white/40 tracking-[0.2em] shrink-0">
-              {COUNTER[0]} — {COUNTER[(products.length - 1) % COUNTER.length]}
-            </span>
             <div className="flex-1 h-px bg-white/10 rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-brand origin-right"
@@ -192,11 +189,19 @@ export function StickyCardsShowcase({
                   product={product}
                   index={i}
                   progress={scrollYProgress}
-                  total={products.length}
-                  counter={COUNTER[i % COUNTER.length] ?? String(i + 1).padStart(2, "0")}
+                  total={products.length + 1}
                 />
               </div>
             ))}
+
+            {/* Final "View All" Slide in Desktop Runway */}
+            <div dir="rtl" className="contents">
+              <RunwayViewAllCard
+                progress={scrollYProgress}
+                total={products.length + 1}
+                index={products.length}
+              />
+            </div>
           </motion.div>
         </div>
       </div>
@@ -209,13 +214,11 @@ function RunwayCard({
   index,
   progress,
   total,
-  counter,
 }: {
   product: Product;
   index: number;
   progress: MotionValue<number>;
   total: number;
-  counter: string;
 }) {
   const step = total > 1 ? 1 / (total - 1) : 1;
   const peak = index * step;
@@ -257,7 +260,7 @@ function RunwayCard({
           <span className="absolute top-3 right-3 bg-brand text-white text-xs font-black tracking-wide px-3 py-1 rounded-full z-10 shadow-[0_0_12px_rgba(255,45,60,0.6)]">
             {discountPct}%
           </span>
-        ) : product.badge ? (
+        ) : product.badge && product.badge !== "جدید" ? (
           <span className="absolute top-3 right-3 border border-white/20 bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-bold tracking-wide px-3 py-1 rounded-full z-10">
             {product.badge}
           </span>
@@ -265,8 +268,8 @@ function RunwayCard({
       </div>
 
       <div className="relative">
-        <span className="text-white/35 text-[11px] tracking-[0.2em] block mb-2">
-          N.{counter} — {product.cat}
+        <span className="text-white/40 text-xs font-medium block mb-2">
+          {product.cat}
         </span>
         <h3 className="text-xl lg:text-2xl font-bold text-white leading-snug mb-2 line-clamp-2">
           {product.name}
@@ -295,6 +298,52 @@ function RunwayCard({
             <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-1" />
           </Link>
         </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function RunwayViewAllCard({
+  progress,
+  total,
+  index,
+}: {
+  progress: MotionValue<number>;
+  total: number;
+  index: number;
+}) {
+  const step = total > 1 ? 1 / (total - 1) : 1;
+  const peak = index * step;
+  const dist = useTransform(progress, (v) => Math.abs(v - peak));
+  const rotateY = useTransform(progress, (v) => (v - peak) * -18);
+  const scale = useTransform(dist, [0, 0.3, 1], [1, 0.9, 0.82]);
+  const opacity = useTransform(dist, [0, 0.3, 0.7], [1, 0.75, 0.4]);
+
+  return (
+    <motion.div
+      className="relative shrink-0 w-[78vw] max-w-[420px] lg:w-[26vw] lg:max-w-[400px]"
+      style={{
+        rotateY,
+        scale,
+        opacity,
+        transformStyle: "preserve-3d",
+      }}
+    >
+      <div className="relative w-full aspect-[4/5] rounded-[32px] overflow-hidden border border-brand/40 bg-gradient-to-b from-brand/15 via-[#0d090d] to-[#060608] p-8 shadow-[0_20px_50px_rgba(255,45,60,0.15)] flex flex-col items-center justify-center text-center">
+        <div className="size-16 rounded-3xl bg-brand/20 border border-brand/40 flex items-center justify-center mb-6 text-brand shadow-[0_0_24px_rgba(255,45,60,0.4)]">
+          <Grid className="size-8" />
+        </div>
+        <h4 className="text-2xl font-black text-white mb-3">مشاهده تمام محصولات</h4>
+        <p className="text-sm text-white/50 mb-8 leading-relaxed max-w-[260px]">
+          کالکشن کامل اکسسوری‌های خاص، فیجت‌ها و زیورآلات کول
+        </p>
+        <Link
+          href="/shop"
+          className="group inline-flex items-center gap-2.5 bg-brand hover:bg-[#e01627] text-white text-sm font-bold px-7 py-3.5 rounded-2xl shadow-[0_8px_24px_rgba(255,45,60,0.45)] hover:scale-105 active:scale-95 transition-all"
+        >
+          <span>دیدن همه محصولات</span>
+          <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+        </Link>
       </div>
     </motion.div>
   );

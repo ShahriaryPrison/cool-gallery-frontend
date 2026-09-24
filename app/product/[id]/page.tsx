@@ -79,7 +79,7 @@ export default async function ProductPage({
     cat: categoryName,
     price: priceToman,
     oldPrice: compareAtToman,
-    badge: compareAtToman && compareAtToman > priceToman ? "تخفیف" : "جدید",
+    badge: compareAtToman && compareAtToman > priceToman ? "تخفیف" : "",
     image: mainImage,
     popularity: 95,
     rating: 4.9,

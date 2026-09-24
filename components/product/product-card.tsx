@@ -30,7 +30,7 @@ export function ProductCard({ product }: { product: Product }) {
             iconClassName="size-14"
           />
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-          {product.badge && (
+          {product.badge && product.badge !== "جدید" && (
             <span className="glass-brand absolute top-2.5 right-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
               {product.badge}
             </span>

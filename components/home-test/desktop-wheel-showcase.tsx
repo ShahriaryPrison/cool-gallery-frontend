@@ -147,7 +147,7 @@ export function DesktopWheelShowcase({
               <span className="absolute top-28 left-10 bg-brand text-white text-sm font-black px-4 py-2 rounded-full z-30 shadow-[0_0_16px_rgba(255,45,60,0.6)]">
                 {Math.round(((products[active].oldPrice! - products[active].price) / products[active].oldPrice!) * 100)}%
               </span>
-            ) : products[active]?.badge ? (
+            ) : products[active]?.badge && products[active].badge !== "جدید" ? (
               <span className="absolute top-28 left-10 bg-white/10 backdrop-blur-md border border-white/15 text-white text-xs font-bold px-4 py-2 rounded-full z-30">
                 {products[active].badge}
               </span>
@@ -156,7 +156,7 @@ export function DesktopWheelShowcase({
 
           {/* ── RIGHT: Text content ── */}
           <div className="relative flex w-1/2 flex-col items-start justify-center px-12 xl:px-20">
-            {/* Category + frame counter */}
+            {/* Category */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={`meta-${active}`}
@@ -164,15 +164,11 @@ export function DesktopWheelShowcase({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-4 mb-5"
+                className="flex items-center gap-3 mb-5"
               >
                 <span className="text-brand font-black text-sm">/ آف ویژه</span>
-                <span className="h-px w-8 bg-white/20" />
-                <span className="cinematic-counter text-xs text-white/30 tracking-[0.3em] uppercase">
-                  FRAME {COUNTER[active]}/{COUNTER[products.length - 1]}
-                </span>
-                <span className="h-px w-8 bg-white/20" />
-                <span className="text-sm text-white/50 font-medium">
+                <span className="h-px w-6 bg-white/20" />
+                <span className="text-sm text-white/60 font-medium">
                   {products[active]?.cat}
                 </span>
               </motion.div>
