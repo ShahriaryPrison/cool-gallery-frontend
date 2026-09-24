@@ -176,10 +176,10 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 flex items-center justify-between px-4 py-3 transition-all duration-500 lg:px-8 lg:py-4",
-          isHome ? "-mb-[64px] lg:-mb-[76px]" : "",
+          "sticky top-0 z-50 flex items-center justify-between px-4 py-2 transition-all duration-500 lg:px-8 lg:py-2.5",
+          isHome ? "-mb-[48px] lg:-mb-[56px]" : "",
           showHeaderLogo
-            ? "glass-bar border-b border-white/8 shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+            ? "glass-bar border-b border-white/8 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl bg-[#050507]/80"
             : "border-b border-transparent bg-transparent shadow-none backdrop-blur-none"
         )}
       >
@@ -187,22 +187,22 @@ export function Header() {
         <div
           className={cn(
             "flex items-center justify-start transition-all duration-500",
-            showHeaderLogo ? "min-w-[130px] lg:min-w-[160px]" : "w-0 min-w-0 overflow-hidden"
+            showHeaderLogo ? "min-w-[80px] lg:min-w-[110px]" : "w-0 min-w-0 overflow-hidden"
           )}
         >
           <AnimatePresence mode="wait">
             {showHeaderLogo && (
               <motion.div
                 key="header-logo"
-                initial={{ opacity: 0, x: 24, scale: 0.85 }}
+                initial={{ opacity: 0, x: 20, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 24, scale: 0.85 }}
+                exit={{ opacity: 0, x: 20, scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 350, damping: 26 }}
               >
                 <Link
                   href="/"
                   aria-label="COOL Gallery"
-                  className="shrink-0 flex items-center justify-center py-1"
+                  className="shrink-0 flex items-center justify-center py-0.5"
                 >
                   <Image
                     src="/logo.png"
@@ -210,7 +210,7 @@ export function Header() {
                     width={868}
                     height={336}
                     priority
-                    className="h-12 w-auto drop-shadow-[0_0_24px_rgba(255,45,60,0.65)] sm:h-14 lg:h-16"
+                    className="h-7 w-auto drop-shadow-[0_0_18px_rgba(255,45,60,0.6)] sm:h-8 lg:h-9"
                   />
                 </Link>
               </motion.div>
@@ -226,23 +226,23 @@ export function Header() {
           )}
         >
           <nav
-            className="flex items-center gap-8 py-1"
+            className="flex items-center gap-7 py-0.5"
           >
             <Link
               href="/"
-              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+              className="text-[13px] font-semibold text-white/80 transition-colors hover:text-white"
             >
               صفحه اصلی
             </Link>
             <Link
               href="/categories"
-              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+              className="text-[13px] font-semibold text-white/80 transition-colors hover:text-white"
             >
               دسته‌بندی
             </Link>
             <Link
               href="/shop"
-              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+              className="text-[13px] font-semibold text-white/80 transition-colors hover:text-white"
             >
               محصولات
             </Link>
@@ -250,47 +250,47 @@ export function Header() {
         </div>
 
         {/* Left Area: Action Icons (End in RTL) */}
-        <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-[100px] lg:min-w-[130px]">
-          <div className="flex items-center gap-2 sm:gap-3">
-                {/* Search */}
-                <motion.button
-                  type="button"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="جست‌وجو"
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                  className="glass text-ink-1 grid size-10 place-items-center rounded-full lg:size-11 hover:text-white transition-colors"
-                >
-                  <Search className="size-[18px]" strokeWidth={2.1} />
-                </motion.button>
+        <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-[80px] lg:min-w-[110px]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Search */}
+            <motion.button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="جست‌وجو"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+              className="glass text-ink-1 grid size-8.5 place-items-center rounded-full sm:size-9 hover:text-white hover:border-brand/40 transition-colors"
+            >
+              <Search className="size-4" strokeWidth={2.1} />
+            </motion.button>
 
-                {/* Cart (Desktop Only - Mobile uses BottomNav) */}
-                <motion.button
-                  type="button"
-                  onClick={() => cart.open()}
-                  aria-label="سبد خرید"
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                  className="hidden lg:grid glass text-ink-1 size-11 place-items-center rounded-full hover:text-white transition-colors relative"
-                >
-                  <ShoppingCart className="size-[18px]" strokeWidth={2.1} />
-                  {cart.count > 0 && (
-                    <span className="bg-brand absolute -top-1 -right-1 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[11px] leading-none font-bold text-white shadow-[0_0_12px_rgba(255,45,60,0.7)]">
-                      {cart.count}
-                    </span>
-                  )}
-                </motion.button>
+            {/* Cart (Desktop Only - Mobile uses BottomNav) */}
+            <motion.button
+              type="button"
+              onClick={() => cart.open()}
+              aria-label="سبد خرید"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+              className="hidden lg:grid glass text-ink-1 size-9 place-items-center rounded-full hover:text-white hover:border-brand/40 transition-colors relative"
+            >
+              <ShoppingCart className="size-4" strokeWidth={2.1} />
+              {cart.count > 0 && (
+                <span className="bg-brand absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full px-1 text-[10px] leading-none font-bold text-white shadow-[0_0_10px_rgba(255,45,60,0.7)]">
+                  {cart.count}
+                </span>
+              )}
+            </motion.button>
 
-                {/* Profile */}
-                <Link href="/account" aria-label="حساب کاربری">
-                  <motion.div
-                    whileTap={{ scale: 0.9 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                    className="glass text-ink-1 grid size-10 place-items-center rounded-full lg:size-11 hover:text-white transition-colors"
-                  >
-                    <UserRound className="size-[18px]" strokeWidth={2.1} />
-                  </motion.div>
-                </Link>
+            {/* Profile */}
+            <Link href="/account" aria-label="حساب کاربری">
+              <motion.div
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 500, damping: 28 }}
+                className="glass text-ink-1 grid size-8.5 place-items-center rounded-full sm:size-9 hover:text-white hover:border-brand/40 transition-colors"
+              >
+                <UserRound className="size-4" strokeWidth={2.1} />
+              </motion.div>
+            </Link>
           </div>
         </div>
       </header>
