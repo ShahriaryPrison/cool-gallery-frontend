@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, Star, ShieldCheck, Truck, RotateCcw, Minus, Plus, Check } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, RotateCcw, Minus, Plus, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart } from "@/components/cart/cart-provider";
@@ -12,9 +12,39 @@ import { Reveal } from "@/components/motion/reveal";
 import { ProductCard } from "@/components/product/product-card";
 import { formatIrrAsToman, irrToToman } from "@/lib/api";
 import { formatToman, toFaDigits } from "@/lib/format";
+import type { Variants } from "motion/react";
 import type { Product } from "@/lib/data";
 import type { ProductDetail, ProductVariant } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const slideVariants: Variants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 120 : -120,
+    opacity: 0,
+    scale: 0.97,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      x: { type: "spring" as const, stiffness: 320, damping: 32 },
+      opacity: { duration: 0.25 },
+      scale: { duration: 0.25 },
+    },
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 120 : -120,
+    opacity: 0,
+    scale: 0.97,
+    transition: {
+      x: { type: "spring" as const, stiffness: 320, damping: 32 },
+      opacity: { duration: 0.2 },
+    },
+  }),
+};
 
 interface ProductDetailViewProps {
   product: Product;
@@ -29,6 +59,9 @@ export function ProductDetailView({
 }: ProductDetailViewProps) {
   const cart = useCart();
   const [qty, setQty] = useState(1);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
 
   // Default variant
   const defaultVar =
@@ -44,7 +77,6 @@ export function ProductDetailView({
     const initial: Record<number, number> = {};
     backendProduct.options.forEach((opt) => {
       if (opt.values?.length) {
-        // If default variant has option values, select them
         if (defaultVar?.option_value_ids?.length) {
           const matchVal = opt.values.find((v) => defaultVar.option_value_ids.includes(v.id));
           initial[opt.id] = matchVal ? matchVal.id : opt.values[0].id;
@@ -56,28 +88,71 @@ export function ProductDetailView({
     return initial;
   });
 
-  // Active Main Image
-  const [activeImage, setActiveImage] = useState<string>(() => {
-    return (
-      activeVariant?.images?.[0]?.url ||
-      backendProduct?.images?.[0]?.url ||
-      product.image ||
-      "/products/fidget-dragon-black.png"
-    );
-  });
+  // Gallery thumbnails list
+  const allGalleryImages = useMemo(() => {
+    const images: { id: string | number; url: string; thumb_url?: string }[] = [];
+    if (backendProduct?.images?.length) {
+      backendProduct.images.forEach((img) => {
+        if (!images.some((i) => i.url === img.url)) {
+          images.push({ id: img.id, url: img.url, thumb_url: img.thumb_url || img.url });
+        }
+      });
+    }
+    // Also add option value images if not in list
+    if (backendProduct?.options?.length) {
+      backendProduct.options.forEach((opt) => {
+        opt.values.forEach((v) => {
+          if (v.image?.url && !images.some((i) => i.url === v.image!.url)) {
+            images.push({ id: `opt-${v.id}`, url: v.image.url, thumb_url: v.image.thumb_url || v.image.url });
+          }
+        });
+      });
+    }
+    if (images.length === 0 && product.image) {
+      images.push({ id: "main", url: product.image, thumb_url: product.image });
+    }
+    return images;
+  }, [backendProduct, product.image]);
+
+  const activeImage = allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
+
+  const changeSlide = (newIdx: number) => {
+    const count = allGalleryImages.length;
+    if (count <= 1) return;
+    const next = (newIdx + count) % count;
+    setDirection(next > activeImageIdx ? 1 : -1);
+    setActiveImageIdx(next);
+  };
+
+  const goToNext = () => changeSlide(activeImageIdx + 1);
+  const goToPrev = () => changeSlide(activeImageIdx - 1);
+
+  // Auto-scroll thumbnail container when active image changes
+  useEffect(() => {
+    if (!thumbnailContainerRef.current) return;
+    const container = thumbnailContainerRef.current;
+    const activeEl = container.children[activeImageIdx] as HTMLElement;
+    if (activeEl) {
+      const scrollPos = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
+      container.scrollTo({ left: scrollPos, behavior: "smooth" });
+    }
+  }, [activeImageIdx]);
 
   // Handle option value click
   const handleOptionSelect = (optionId: number, valueId: number) => {
     const nextOptions = { ...selectedOptionValues, [optionId]: valueId };
     setSelectedOptionValues(nextOptions);
 
-    // Find the option value object to check for an associated image
     const currentOpt = backendProduct?.options.find((o) => o.id === optionId);
     const currentVal = currentOpt?.values.find((v) => v.id === valueId);
 
-    // If this option value has an image, switch immediately to it!
+    // If this option value has an image, switch slider immediately to it!
     if (currentVal?.image?.url) {
-      setActiveImage(currentVal.image.url);
+      const foundIdx = allGalleryImages.findIndex((img) => img.url === currentVal.image!.url);
+      if (foundIdx !== -1) {
+        setDirection(foundIdx > activeImageIdx ? 1 : -1);
+        setActiveImageIdx(foundIdx);
+      }
     }
 
     // Match variant with selected options
@@ -89,9 +164,13 @@ export function ProductDetailView({
 
       if (matchedVariant) {
         setActiveVariant(matchedVariant);
-        // If variant has specific image and option value didn't already override
         if (matchedVariant.images?.[0]?.url && !currentVal?.image?.url) {
-          setActiveImage(matchedVariant.images[0].url);
+          const imgUrl = matchedVariant.images[0].url;
+          const foundIdx = allGalleryImages.findIndex((img) => img.url === imgUrl);
+          if (foundIdx !== -1) {
+            setDirection(foundIdx > activeImageIdx ? 1 : -1);
+            setActiveImageIdx(foundIdx);
+          }
         }
       }
     }
@@ -144,34 +223,8 @@ export function ProductDetailView({
     toast.success("محصول به سبد خرید اضافه شد");
   };
 
-  // Gallery thumbnails
-  const allGalleryImages = useMemo(() => {
-    const images: { id: string | number; url: string; thumb_url?: string }[] = [];
-    if (backendProduct?.images?.length) {
-      backendProduct.images.forEach((img) => {
-        if (!images.some((i) => i.url === img.url)) {
-          images.push({ id: img.id, url: img.url, thumb_url: img.thumb_url || img.url });
-        }
-      });
-    }
-    // Also add option value images if not in list
-    if (backendProduct?.options?.length) {
-      backendProduct.options.forEach((opt) => {
-        opt.values.forEach((v) => {
-          if (v.image?.url && !images.some((i) => i.url === v.image!.url)) {
-            images.push({ id: `opt-${v.id}`, url: v.image.url, thumb_url: v.image.thumb_url || v.image.url });
-          }
-        });
-      });
-    }
-    if (images.length === 0 && product.image) {
-      images.push({ id: "main", url: product.image, thumb_url: product.image });
-    }
-    return images;
-  }, [backendProduct, product.image]);
-
   return (
-    <div className="pb-24">
+    <div className="pb-36 lg:pb-24">
       {/* Back to shop */}
       <div className="px-5 pt-4 max-w-7xl mx-auto lg:px-12 lg:pt-8">
         <Link
@@ -184,45 +237,117 @@ export function ProductDetailView({
       </div>
 
       <div className="max-w-7xl mx-auto lg:flex lg:items-start lg:gap-12 lg:px-12 lg:pt-8">
-        {/* ── Left/Top: Product Main Image & Gallery ── */}
+        {/* ── Left/Top: Interactive Image Slider & Gallery ── */}
         <div className="px-5 pt-6 lg:sticky lg:top-28 lg:w-[48%] lg:shrink-0 lg:px-0 lg:pt-0">
-          <motion.div
-            key={activeImage}
-            initial={{ opacity: 0.8, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="glass relative aspect-square w-full overflow-hidden rounded-[32px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)] bg-[#09090c]"
-          >
-            <Image
-              src={activeImage}
-              alt={product.name}
-              fill
-              priority
-              sizes="(min-width: 1024px) 500px, 90vw"
-              className="object-cover rounded-[32px] transition-transform duration-500 hover:scale-105"
-            />
+          {/* Main Slider Viewport */}
+          <div className="relative aspect-square w-full overflow-hidden rounded-[32px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)] bg-[#09090c] select-none">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.div
+                key={activeImageIdx}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(_, { offset, velocity }) => {
+                  const swipe = offset.x;
+                  if (swipe < -40 || velocity.x < -0.3) {
+                    goToNext();
+                  } else if (swipe > 40 || velocity.x > 0.3) {
+                    goToPrev();
+                  }
+                }}
+                className="absolute inset-0 cursor-grab active:cursor-grabbing w-full h-full"
+              >
+                <Image
+                  src={activeImage}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 500px, 90vw"
+                  className="object-cover rounded-[32px] pointer-events-none"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Top Right Badge */}
             {product.badge && (
-              <span className="glass-brand absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <span className="glass-brand absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-bold text-white shadow-lg z-20 pointer-events-none">
                 {product.badge}
               </span>
             )}
-          </motion.div>
+
+            {/* Top Left Slide Counter */}
+            {allGalleryImages.length > 1 && (
+              <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-[11px] font-bold text-white/90 shadow-lg pointer-events-none">
+                {toFaDigits(activeImageIdx + 1)} / {toFaDigits(allGalleryImages.length)}
+              </div>
+            )}
+
+            {/* Navigation Arrows (Left & Right) */}
+            {allGalleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goToPrev}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
+                  aria-label="تصویر قبلی"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNext}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 shadow-lg"
+                  aria-label="تصویر بعدی"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+              </>
+            )}
+
+            {/* Bottom Dots Indicator */}
+            {allGalleryImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                {allGalleryImages.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => changeSlide(i)}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-300",
+                      activeImageIdx === i
+                        ? "w-5 bg-brand shadow-[0_0_8px_rgba(255,45,60,0.8)]"
+                        : "w-1.5 bg-white/30 hover:bg-white/60"
+                    )}
+                    aria-label={`رفتن به تصویر ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Thumbnail Gallery Strip */}
           {allGalleryImages.length > 1 && (
-            <div className="no-scrollbar mt-4 flex items-center gap-3 overflow-x-auto pb-2">
-              {allGalleryImages.map((img) => {
-                const isActive = activeImage === img.url;
+            <div
+              ref={thumbnailContainerRef}
+              className="no-scrollbar mt-4 flex items-center gap-3 overflow-x-auto pb-2 scroll-smooth"
+            >
+              {allGalleryImages.map((img, i) => {
+                const isActive = activeImageIdx === i;
                 return (
                   <button
                     key={img.id}
                     type="button"
-                    onClick={() => setActiveImage(img.url)}
+                    onClick={() => changeSlide(i)}
                     className={cn(
                       "relative size-16 sm:size-20 shrink-0 overflow-hidden rounded-2xl border transition-all duration-300",
                       isActive
-                        ? "border-brand shadow-[0_0_16px_rgba(255,45,60,0.5)] scale-105"
-                        : "border-white/10 opacity-60 hover:opacity-100 hover:border-white/30"
+                        ? "border-brand shadow-[0_0_16px_rgba(255,45,60,0.5)] scale-105 ring-2 ring-brand/40"
+                        : "border-white/10 opacity-50 hover:opacity-100 hover:border-white/30"
                     )}
                   >
                     <Image
