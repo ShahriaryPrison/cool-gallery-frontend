@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Sparkles,
   ShoppingBag,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,9 +83,9 @@ export function ProductDetailView({
   relatedProducts = [],
 }: ProductDetailViewProps) {
   const cart = useCart();
-  const [qty, setQty] = useState(1);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
   const mobileThumbRef = useRef<HTMLDivElement>(null);
   const scrollTrackRef = useRef<HTMLDivElement>(null);
@@ -93,9 +94,11 @@ export function ProductDetailView({
 
   // Identify if any option has value images (e.g. Models or Colors)
   const visualOption = useMemo(() => {
-    return backendProduct?.options?.find((opt) =>
-      opt.values.some((v) => Boolean(v.image?.url))
-    ) || null;
+    return (
+      backendProduct?.options?.find((opt) =>
+        opt.values.some((v) => Boolean(v.image?.url))
+      ) || null
+    );
   }, [backendProduct]);
 
   // Non-visual options (e.g. Size, Material) that need separate text pills
@@ -182,6 +185,8 @@ export function ProductDetailView({
 
   const activeImage =
     allGalleryImages[activeImageIdx]?.url || product.image || "/products/fidget-dragon-black.png";
+
+  const isCurrentImgLoaded = Boolean(loadedImages[activeImage]);
 
   const markUserInteraction = useCallback(() => {
     isUserInteractingRef.current = true;
@@ -301,7 +306,20 @@ export function ProductDetailView({
   const inStock = activeVariant ? activeVariant.in_stock : true;
   const stockQty = activeVariant?.stock_quantity ?? null;
 
-  // Add to cart action
+  // Determine current quantity of this specific variant/product in cart
+  const currentCartItem = useMemo(() => {
+    if (!cart.isLoaded) return null;
+    if (activeVariant?.id) {
+      return cart.items.find((item) => item.variant_id === activeVariant.id);
+    }
+    return cart.items.find(
+      (item) => item.product_slug === product.id || String(item.product_id) === String(product.id)
+    );
+  }, [cart.items, cart.isLoaded, activeVariant, product.id]);
+
+  const cartQty = currentCartItem?.qty || 0;
+
+  // Add initial item to cart
   const handleAddToCart = () => {
     if (backendProduct && activeVariant) {
       const variantOptionLabels = backendProduct.options
@@ -326,13 +344,44 @@ export function ProductDetailView({
           stock_quantity: activeVariant.stock_quantity,
           in_stock: activeVariant.in_stock,
         },
-        qty
+        1
       );
     } else {
-      cart.addToCart(product, "", "", qty);
+      cart.addToCart(product, "", "", 1);
     }
 
-    toast.success("محصول به سبد خرید اضافه شد");
+    toast.success("به سبد خرید افزوده شد");
+  };
+
+  // Increment item quantity in cart
+  const handleIncrement = () => {
+    if (activeVariant?.id) {
+      if (stockQty && cartQty >= stockQty) {
+        toast.error("حداکثر موجودی انبار اضافه شده است");
+        return;
+      }
+      cart.updateQty(activeVariant.id, cartQty + 1);
+    } else {
+      cart.addToCart(product, "", "", 1);
+    }
+  };
+
+  // Decrement item quantity in cart (removes if reaches 0)
+  const handleDecrement = () => {
+    if (activeVariant?.id) {
+      if (cartQty <= 1) {
+        cart.removeItem(activeVariant.id);
+        toast.info("محصول از سبد حذف شد");
+      } else {
+        cart.updateQty(activeVariant.id, cartQty - 1);
+      }
+    } else {
+      if (cartQty <= 1) {
+        cart.bumpLine(product.id, -1);
+      } else {
+        cart.bumpLine(product.id, -1);
+      }
+    }
   };
 
   const hasMultipleImages = allGalleryImages.length > 1;
@@ -442,6 +491,23 @@ export function ProductDetailView({
 
               {/* Main Image Stage */}
               <div className="relative aspect-[3/4] w-full max-w-[420px] xl:max-w-[460px] rounded-[36px] overflow-hidden border border-white/10 bg-[#08080c] shadow-[0_24px_80px_rgba(0,0,0,0.8),0_0_40px_rgba(255,45,60,0.15)] select-none">
+                {/* ── Glassmorphic Shimmer Loader ── */}
+                {!isCurrentImgLoaded && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[36px] bg-[#07070b]/80 backdrop-blur-xl">
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div className="h-full w-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent animate-glass-shimmer" />
+                    </div>
+                    <div className="relative flex flex-col items-center gap-3">
+                      <div className="size-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_24px_rgba(255,45,60,0.25)]">
+                        <Sparkles className="size-5 text-brand animate-pulse" />
+                      </div>
+                      <span className="text-xs text-white/50 font-medium tracking-wide">
+                        در حال بارگذاری تصویر...
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
                     key={activeImageIdx}
@@ -469,6 +535,7 @@ export function ProductDetailView({
                       fill
                       priority
                       quality={90}
+                      onLoad={() => setLoadedImages((prev) => ({ ...prev, [activeImage]: true }))}
                       sizes="(min-width: 1024px) 500px, 90vw"
                       className="object-contain rounded-[32px] pointer-events-none drop-shadow-[0_16px_36px_rgba(0,0,0,0.7)]"
                     />
@@ -664,48 +731,64 @@ export function ProductDetailView({
                   )}
                 </div>
 
-                {/* Quantity Controls & CTA Button */}
+                {/* Dynamic Cart Action: Morph between "Add to Cart" and Quantity Stepper */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-white/50">تعداد:</span>
-                    <div className="glass flex items-center rounded-xl p-0.5 border border-white/10">
-                      <button
+                  <AnimatePresence mode="wait">
+                    {cartQty === 0 ? (
+                      <motion.button
+                        key="add-btn"
                         type="button"
-                        onClick={() => setQty((q) => Math.max(1, q - 1))}
-                        className="text-ink-3 hover:text-white size-8 grid place-items-center rounded-lg transition-colors active:scale-90"
-                        aria-label="کاهش تعداد"
+                        disabled={!inStock}
+                        onClick={handleAddToCart}
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        whileTap={{ scale: 0.96 }}
+                        className={cn(
+                          "w-full rounded-2xl py-3.5 text-sm font-black transition-all duration-300 shadow-[0_8px_30px_rgba(255,45,60,0.35)] flex items-center justify-center gap-2",
+                          inStock
+                            ? "bg-gradient-to-r from-brand to-[#e01627] text-white hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(255,45,60,0.55)] cursor-pointer"
+                            : "bg-white/10 text-white/40 cursor-not-allowed"
+                        )}
                       >
-                        <Minus className="size-3.5" />
-                      </button>
-                      <span className="min-w-[28px] text-center font-bold text-xs text-white">
-                        {toFaDigits(qty)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setQty((q) => (stockQty ? Math.min(stockQty, q + 1) : q + 1))}
-                        className="text-ink-3 hover:text-white size-8 grid place-items-center rounded-lg transition-colors active:scale-90"
-                        aria-label="افزایش تعداد"
+                        <ShoppingBag className="size-4" />
+                        <span>{inStock ? "افزودن به سبد خرید" : "ناموجود"}</span>
+                      </motion.button>
+                    ) : (
+                      <motion.div
+                        key="stepper-controls"
+                        initial={{ opacity: 0, scale: 0.92, y: 6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.92, y: -6 }}
+                        transition={{ type: "spring", stiffness: 450, damping: 26 }}
+                        className="glass flex items-center justify-between rounded-2xl p-1.5 border border-brand/40 bg-brand/10 shadow-[0_0_24px_rgba(255,45,60,0.2)]"
                       >
-                        <Plus className="size-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                        <button
+                          type="button"
+                          onClick={handleDecrement}
+                          className="size-9 grid place-items-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all active:scale-90"
+                          aria-label="کاهش تعداد"
+                        >
+                          {cartQty === 1 ? <Trash2 className="size-4 text-rose-400" /> : <Minus className="size-4" />}
+                        </button>
 
-                  <motion.button
-                    type="button"
-                    disabled={!inStock}
-                    onClick={handleAddToCart}
-                    whileTap={{ scale: 0.96 }}
-                    className={cn(
-                      "w-full rounded-2xl py-3.5 text-sm font-black transition-all duration-300 shadow-[0_8px_30px_rgba(255,45,60,0.35)] flex items-center justify-center gap-2",
-                      inStock
-                        ? "bg-gradient-to-r from-brand to-[#e01627] text-white hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(255,45,60,0.55)] cursor-pointer"
-                        : "bg-white/10 text-white/40 cursor-not-allowed"
+                        <div className="flex flex-col items-center">
+                          <span className="text-base font-black text-white">{toFaDigits(cartQty)}</span>
+                          <span className="text-[9.5px] text-white/60 font-medium">در سبد خرید</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleIncrement}
+                          disabled={Boolean(stockQty && cartQty >= stockQty)}
+                          className="size-9 grid place-items-center rounded-xl bg-brand hover:bg-[#e01627] text-white shadow-[0_0_12px_rgba(255,45,60,0.6)] transition-all active:scale-90 disabled:opacity-40"
+                          aria-label="افزایش تعداد"
+                        >
+                          <Plus className="size-4" />
+                        </button>
+                      </motion.div>
                     )}
-                  >
-                    <ShoppingBag className="size-4" />
-                    <span>{inStock ? "افزودن به سبد خرید" : "ناموجود"}</span>
-                  </motion.button>
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -718,6 +801,23 @@ export function ProductDetailView({
       <div className="block lg:hidden px-4 pt-2 pb-32">
         {/* Main Image Slider Viewport */}
         <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] bg-[#09090c] select-none mb-3">
+          {/* ── Glassmorphic Shimmer Loader (Mobile) ── */}
+          {!isCurrentImgLoaded && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[28px] bg-[#07070b]/80 backdrop-blur-xl">
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="h-full w-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent animate-glass-shimmer" />
+              </div>
+              <div className="relative flex flex-col items-center gap-2.5">
+                <div className="size-9 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,45,60,0.25)]">
+                  <Sparkles className="size-4 text-brand animate-pulse" />
+                </div>
+                <span className="text-[11px] text-white/50 font-medium tracking-wide">
+                  در حال بارگذاری تصویر...
+                </span>
+              </div>
+            </div>
+          )}
+
           <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={activeImageIdx}
@@ -745,6 +845,7 @@ export function ProductDetailView({
                 fill
                 priority
                 sizes="90vw"
+                onLoad={() => setLoadedImages((prev) => ({ ...prev, [activeImage]: true }))}
                 className="object-contain rounded-[24px] pointer-events-none"
               />
             </motion.div>
@@ -809,7 +910,7 @@ export function ProductDetailView({
           )}
         </div>
 
-        {/* ── UNIFIED MOBILE MODEL & THUMBNAIL SELECTOR (NO DUPLICATION) ── */}
+        {/* ── UNIFIED MOBILE MODEL & THUMBNAIL SELECTOR ── */}
         {hasMultipleImages && (
           <div className="mb-4">
             {visualOption && (
@@ -956,7 +1057,7 @@ export function ProductDetailView({
           </div>
         )}
 
-        {/* Mobile Sticky Bottom Floating Action Bar */}
+        {/* Mobile Sticky Bottom Floating Action Bar with Dynamic Cart Morph */}
         <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
           <div className="glass-dark border border-white/15 backdrop-blur-xl rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3">
             <div>
@@ -970,43 +1071,63 @@ export function ProductDetailView({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="glass flex items-center rounded-xl p-0.5 border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="text-ink-3 hover:text-white size-7 grid place-items-center rounded-lg"
-                  aria-label="کاهش"
-                >
-                  <Minus className="size-3" />
-                </button>
-                <span className="min-w-[20px] text-center font-bold text-xs text-white">
-                  {toFaDigits(qty)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setQty((q) => (stockQty ? Math.min(stockQty, q + 1) : q + 1))}
-                  className="text-ink-3 hover:text-white size-7 grid place-items-center rounded-lg"
-                  aria-label="افزایش"
-                >
-                  <Plus className="size-3" />
-                </button>
-              </div>
+              <AnimatePresence mode="wait">
+                {cartQty === 0 ? (
+                  <motion.button
+                    key="mobile-add-btn"
+                    type="button"
+                    disabled={!inStock}
+                    onClick={handleAddToCart}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={cn(
+                      "rounded-xl px-5 py-2.5 text-xs font-black shadow-[0_4px_16px_rgba(255,45,60,0.4)] flex items-center gap-1.5",
+                      inStock
+                        ? "bg-brand text-white"
+                        : "bg-white/10 text-white/40 cursor-not-allowed"
+                    )}
+                  >
+                    <ShoppingBag className="size-3.5" />
+                    <span>{inStock ? "خرید" : "ناموجود"}</span>
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key="mobile-qty-stepper"
+                    initial={{ opacity: 0, scale: 0.9, x: 10 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, x: 10 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 26 }}
+                    className="glass flex items-center gap-2 rounded-xl p-1 border border-brand/40 bg-brand/10 shadow-[0_0_16px_rgba(255,45,60,0.3)]"
+                  >
+                    <button
+                      type="button"
+                      onClick={handleDecrement}
+                      className="size-7 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white active:scale-90"
+                      aria-label="کاهش"
+                    >
+                      {cartQty === 1 ? <Trash2 className="size-3 text-rose-400" /> : <Minus className="size-3" />}
+                    </button>
 
-              <motion.button
-                type="button"
-                disabled={!inStock}
-                onClick={handleAddToCart}
-                whileTap={{ scale: 0.95 }}
-                className={cn(
-                  "rounded-xl px-4 py-2 text-xs font-black shadow-[0_4px_16px_rgba(255,45,60,0.4)] flex items-center gap-1.5",
-                  inStock
-                    ? "bg-brand text-white"
-                    : "bg-white/10 text-white/40 cursor-not-allowed"
+                    <div className="flex flex-col items-center px-1">
+                      <span className="min-w-[18px] text-center font-black text-xs text-white">
+                        {toFaDigits(cartQty)}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleIncrement}
+                      disabled={Boolean(stockQty && cartQty >= stockQty)}
+                      className="size-7 grid place-items-center rounded-lg bg-brand text-white shadow-[0_0_10px_rgba(255,45,60,0.6)] active:scale-90 disabled:opacity-40"
+                      aria-label="افزایش"
+                    >
+                      <Plus className="size-3" />
+                    </button>
+                  </motion.div>
                 )}
-              >
-                <ShoppingBag className="size-3.5" />
-                <span>{inStock ? "خرید" : "ناموجود"}</span>
-              </motion.button>
+              </AnimatePresence>
             </div>
           </div>
         </div>

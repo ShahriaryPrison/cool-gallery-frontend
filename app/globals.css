@@ -334,6 +334,15 @@
   animation: divider-pulse 3s ease-in-out infinite;
 }
 
+@keyframes glass-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-glass-shimmer {
+  animation: glass-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Film strip perforations — top and bottom borders for runway gallery */
 .film-strip-border {
   background-image: repeating-linear-gradient(
