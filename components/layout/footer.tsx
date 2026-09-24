@@ -3,8 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AtSign, ShieldCheck, Truck, MapPin, Send } from "lucide-react";
-import { motion, useScroll, useTransform, useSpring } from "motion/react";
-import { useRef } from "react";
+import { motion } from "motion/react";
 
 const LINKS = [
   { label: "همه محصولات", href: "/shop" },
@@ -14,31 +13,14 @@ const LINKS = [
 ];
 
 export function Footer() {
-  const footerRef = useRef<HTMLElement>(null);
-  
-  // رهگیری اسکرول
-  const { scrollYProgress } = useScroll({
-    target: footerRef,
-    offset: ["start end", "end end"]
-  });
-
-  // استفاده از اسپرینگ برای اینکه پارالکس خیلی نرم و فیزیکی باشه
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 50,
-    damping: 15,
-    restDelta: 0.001
-  });
-
-  // تغییرات دراماتیک‌تر برای ایجاد حس پارالکس (محتوا از ۲۰۰ پیکسل پایین‌تر میاد بالا)
-  const y = useTransform(smoothProgress, [0, 1], [200, 0]);
-  const opacity = useTransform(smoothProgress, [0, 0.3, 1], [0, 1, 1]);
-  const scale = useTransform(smoothProgress, [0, 1], [0.9, 1]);
-
   return (
-    <footer ref={footerRef} className="mt-10 px-5 lg:mt-16 lg:px-12 pb-24 overflow-hidden relative">
+    <footer className="mt-10 px-5 lg:mt-16 lg:px-12 pb-24 overflow-hidden relative z-10">
       <motion.div 
-        style={{ y, opacity, scale }}
-        className="glass rounded-[28px] p-6 lg:p-10 origin-bottom"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="glass rounded-[28px] p-6 lg:p-10"
       >
         <div className="lg:flex lg:items-start lg:justify-between lg:gap-10">
           <div className="max-w-[440px]">
@@ -47,7 +29,7 @@ export function Footer() {
               alt="COOL Gallery"
               width={868}
               height={336}
-              className="h-7 w-auto drop-shadow-[0_0_16px_rgba(255,45,60,0.4)]"
+              className="h-8 w-auto drop-shadow-[0_0_16px_rgba(255,45,60,0.4)]"
             />
             <p className="text-ink-2 mt-4 text-[14px] font-bold">
               همیشه COOL باش

@@ -69,10 +69,10 @@ export function StickyCardsShowcase({
         </motion.div>
       </div>
 
-      {/* ─── MOBILE VIEW: Native Touch-Smooth Horizontal Snap Carousel with Lightweight Scroll Animation ─── */}
+      {/* ─── MOBILE VIEW: Native Touch-Smooth Horizontal Snap Carousel (Zero JS lag / 120fps smooth) ─── */}
       <div className="block lg:hidden px-4">
         <div
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-6 pt-2"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-6 pt-2 scroll-smooth"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {products.map((product, i) => {
@@ -81,13 +81,9 @@ export function StickyCardsShowcase({
               : null;
 
             return (
-              <motion.div
+              <div
                 key={product.id}
-                initial={{ opacity: 0, y: 18, scale: 0.96 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="relative shrink-0 w-[78vw] max-w-[300px] snap-center rounded-[28px] border border-white/10 bg-[#0a0a0e] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.5)] flex flex-col justify-between"
+                className="relative shrink-0 w-[78vw] max-w-[300px] snap-center rounded-[28px] border border-white/10 bg-[#0a0a0e] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.5)] flex flex-col justify-between transform-gpu"
               >
                 <div>
                   <div className="relative w-full aspect-[4/5] mb-3.5 rounded-[22px] overflow-hidden border border-white/10 bg-[#060608]">
@@ -135,22 +131,19 @@ export function StickyCardsShowcase({
 
                   <Link
                     href={`/product/${product.id}`}
-                    className="inline-flex items-center gap-1 text-white bg-white/10 hover:bg-brand px-3 py-1.5 rounded-xl text-xs font-medium transition-colors"
+                    className="inline-flex items-center gap-1 text-white bg-white/10 hover:bg-brand px-3 py-1.5 rounded-xl text-xs font-medium transition-colors active:scale-95"
                   >
                     <span>مشاهده</span>
                     <ArrowLeft className="size-3" />
                   </Link>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
 
           {/* Final "View All" card in mobile track */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative shrink-0 w-[55vw] max-w-[220px] snap-center rounded-[28px] border border-brand/30 bg-gradient-to-b from-brand/10 to-transparent p-6 shadow-[0_12px_32px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center"
+          <div
+            className="relative shrink-0 w-[55vw] max-w-[220px] snap-center rounded-[28px] border border-brand/30 bg-gradient-to-b from-brand/10 to-transparent p-6 shadow-[0_12px_32px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center transform-gpu"
           >
             <div className="size-12 rounded-2xl bg-brand/20 border border-brand/40 flex items-center justify-center mb-4 text-brand shadow-[0_0_16px_rgba(255,45,60,0.3)]">
               <Grid className="size-6" />
@@ -159,12 +152,12 @@ export function StickyCardsShowcase({
             <p className="text-xs text-white/50 mb-5 leading-relaxed">کالکشن کامل اکسسوری، فیجت و زیورآلات خاص</p>
             <Link
               href="/shop"
-              className="bg-brand text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.4)]"
+              className="bg-brand text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.4)] active:scale-95 transition-transform"
             >
               <span>فروشگاه</span>
               <ArrowLeft className="size-3.5" />
             </Link>
-          </motion.div>
+          </div>
         </div>
       </div>
 
