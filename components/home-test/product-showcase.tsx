@@ -1,24 +1,20 @@
 "use client";
 
-import { motion, type MotionValue, useScroll, useTransform, useSpring, useMotionValueEvent } from "motion/react";
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { getBestSellers, type Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 
 const THEMES = [
-  { accent: "#ff2d3c", glow: "rgba(255,45,60,0.32)" },
-  { accent: "#3b82f6", glow: "rgba(59,130,246,0.28)" },
-  { accent: "#f59e0b", glow: "rgba(245,158,11,0.28)" },
-  { accent: "#10b981", glow: "rgba(16,185,129,0.28)" },
+  { accent: "#ff2d3c", glow: "rgba(255,45,60,0.22)" },
+  { accent: "#3b82f6", glow: "rgba(59,130,246,0.2)" },
+  { accent: "#f59e0b", glow: "rgba(245,158,11,0.2)" },
+  { accent: "#10b981", glow: "rgba(16,185,129,0.2)" },
 ];
 
 const COUNTER = ["01", "02", "03", "04", "05", "06", "07", "08"];
-
-function clamp(v: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, v));
-}
 
 export function ProductShowcase({
   products: initialProducts,
@@ -26,233 +22,167 @@ export function ProductShowcase({
   products?: Product[];
 }) {
   const products = initialProducts && initialProducts.length > 0 ? initialProducts.slice(0, 4) : getBestSellers(4);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  const step = products.length > 1 ? 1 / (products.length - 1) : 1;
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const idx = Math.min(products.length - 1, Math.max(0, Math.round(latest / step)));
-    if (idx !== currentIdx) {
-      setCurrentIdx(idx);
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const scrollLeft = Math.abs(el.scrollLeft);
+    const itemWidth = el.offsetWidth * 0.85;
+    if (itemWidth > 0) {
+      const idx = Math.min(products.length - 1, Math.max(0, Math.round(scrollLeft / itemWidth)));
+      if (idx !== activeIdx) {
+        setActiveIdx(idx);
+      }
     }
-  });
+  };
 
-  const steppedProgress = useTransform(scrollYProgress, (v) => {
-    return Math.min(1, Math.max(0, Math.round(v / step) * step));
-  });
-
-  const smoothProgress = useSpring(steppedProgress, {
-    stiffness: 140,
-    damping: 24,
-    restDelta: 0.001,
-  });
-
-  const theme = THEMES[currentIdx % THEMES.length];
+  const scrollToIndex = (idx: number) => {
+    if (!scrollContainerRef.current) return;
+    const itemWidth = scrollContainerRef.current.offsetWidth * 0.85 + 16;
+    scrollContainerRef.current.scrollTo({
+      left: -(idx * itemWidth),
+      behavior: "smooth",
+    });
+    setActiveIdx(idx);
+  };
 
   return (
-    <section
-      ref={containerRef}
-      id="products"
-      className="relative w-full border-y border-white/5 bg-surface-0"
-      style={{ height: `${products.length * 90}vh` }}
-    >
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden bg-surface-0">
-        {products.map((_, i) => {
-          const ranges = getFadeRanges(i, products.length, step);
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const bgOpacity = useTransform(smoothProgress, ranges.inputs, ranges.opacity);
-          const t = THEMES[i % THEMES.length];
+    <section id="products" className="relative w-full border-y border-white/5 bg-[#070709] py-14 overflow-hidden z-20">
+      {/* Header */}
+      <div className="px-6 mb-8 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Sparkles className="size-3.5 text-brand" />
+            <span className="text-[11px] font-semibold tracking-[0.25em] text-white/40 uppercase">
+              کالکشن ویژه
+            </span>
+          </div>
+          <h2 className="text-2xl font-black text-white">
+            شاهکارهای گالری
+          </h2>
+        </div>
+
+        {/* Counter Indicators */}
+        <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+          {products.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => scrollToIndex(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                activeIdx === i ? "w-6 bg-brand shadow-[0_0_8px_rgba(255,45,60,0.6)]" : "w-1.5 bg-white/20"
+              }`}
+              aria-label={`اسلاید ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Touch-optimized snap carousel with 60fps native momentum */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar px-6 pb-4 pt-1"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {products.map((product, i) => {
+          const theme = THEMES[i % THEMES.length];
+          const isActive = activeIdx === i;
 
           return (
-            <motion.div
-              key={`bg-${i}`}
-              className="absolute inset-0 z-0"
-              style={{
-                opacity: bgOpacity,
-                background: `radial-gradient(circle at 50% 38%, ${t.glow} 0%, #050506 65%)`,
-              }}
-            />
+            <div
+              key={product.id}
+              className={`relative shrink-0 w-[82vw] max-w-[340px] snap-center rounded-[30px] p-4 transition-all duration-300 ${
+                isActive
+                  ? "bg-[#0d0d12] border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
+                  : "bg-[#09090c] border border-white/5 opacity-80"
+              }`}
+            >
+              {/* Product Card Glow */}
+              <div
+                className="pointer-events-none absolute inset-0 rounded-[30px] opacity-40 transition-opacity duration-300"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 30%, ${theme.glow} 0%, transparent 70%)`,
+                }}
+              />
+
+              {/* Top Frame Counter Badge */}
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="cinematic-counter text-[10px] font-semibold tracking-widest text-white/40">
+                  FRAME {COUNTER[i] ?? String(i + 1).padStart(2, "0")}/{COUNTER[products.length - 1] ?? "04"}
+                </span>
+                <span className="text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
+                  {product.cat}
+                </span>
+              </div>
+
+              {/* Product Image */}
+              <div className="relative w-full aspect-square rounded-[24px] overflow-hidden bg-black/40 border border-white/10 mb-4 shadow-inner">
+                <Image
+                  src={product.image || "/products/fidget-dragon-black.png"}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 340px, 400px"
+                  className="object-cover rounded-[24px] transition-transform duration-500 hover:scale-105"
+                />
+                {product.badge && (
+                  <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-extrabold text-white leading-tight line-clamp-1">
+                  {product.name}
+                </h3>
+                <p className="text-white/50 text-[11.5px] leading-relaxed line-clamp-2 min-h-[34px]">
+                  {product.description}
+                </p>
+
+                {/* Specs */}
+                {product.specs && product.specs.length > 0 && (
+                  <div className="flex flex-wrap gap-1 my-1">
+                    {product.specs.slice(0, 2).map((spec, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-[9.5px] text-white/70"
+                      >
+                        <span className="text-white/40 ml-1">{spec.k}:</span>
+                        {spec.v}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Pricing & CTA Button */}
+                <div className="mt-2 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+                  <div className="flex flex-col">
+                    {product.oldPrice && (
+                      <span className="text-white/35 line-through text-[10px]">
+                        {formatToman(product.oldPrice)}
+                      </span>
+                    )}
+                    <span className="text-base font-black text-white">
+                      {formatToman(product.price)}{" "}
+                      <span className="text-[10px] font-normal text-white/40">تومان</span>
+                    </span>
+                  </div>
+
+                  <Link
+                    href={`/product/${product.id}`}
+                    className="bg-brand text-white font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.35)] active:scale-95 transition-all"
+                  >
+                    <span>خرید</span>
+                    <ArrowLeft className="size-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
           );
         })}
-
-        <div className="pointer-events-none absolute top-0 left-0 right-0 h-5 film-strip-border z-30 opacity-40" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-5 film-strip-border z-30 opacity-40" />
-
-        <div className="pointer-events-none absolute inset-0 z-20 scanline-overlay opacity-20" />
-        <div className="pointer-events-none absolute inset-0 z-20 animate-film-flicker opacity-[0.03] bg-white" />
-
-        <div className="absolute top-8 left-0 right-0 text-center z-20 px-6 pointer-events-none">
-          <span className="cinematic-counter text-white/35 text-[10px] font-semibold tracking-[0.35em] uppercase">
-            کالکشن ویژه
-          </span>
-        </div>
-
-        <motion.div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[55%] z-0"
-          animate={{
-            background: `radial-gradient(ellipse 70% 60% at 50% 20%, ${theme.glow} 0%, transparent 70%)`,
-          }}
-          transition={{ duration: 0.8 }}
-        />
-
-        {products.map((product, i) => (
-          <ProductFrame
-            key={product.id}
-            product={product}
-            index={i}
-            currentIdx={currentIdx}
-            total={products.length}
-            progress={smoothProgress}
-            step={step}
-            counter={COUNTER[i] ?? String(i + 1).padStart(2, "0")}
-          />
-        ))}
       </div>
     </section>
-  );
-}
-
-function getFadeRanges(index: number, total: number, step: number) {
-  const peak = index * step;
-  if (total <= 1) return { inputs: [0, 1] as number[], opacity: [1, 1] as number[] };
-
-  if (index === 0) {
-    return { inputs: [peak, peak + step], opacity: [1, 0] };
-  }
-  if (index === total - 1) {
-    return { inputs: [peak - step, peak], opacity: [0, 1] };
-  }
-  return { inputs: [peak - step, peak, peak + step], opacity: [0, 1, 0] };
-}
-
-function ProductFrame({
-  product,
-  index,
-  currentIdx,
-  total,
-  progress,
-  step,
-  counter,
-}: {
-  product: Product;
-  index: number;
-  currentIdx: number;
-  total: number;
-  progress: MotionValue<number>;
-  step: number;
-  counter: string;
-}) {
-  const isAdjacent = Math.abs(index - currentIdx) <= 1;
-  const peak = index * step;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const dc = useTransform(progress, (v) => clamp((v - peak) / step, -1, 1));
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const imgClip = useTransform(dc, (d) =>
-    d <= 0 ? `inset(0% 0% ${-d * 100}% 0%)` : `inset(${d * 100}% 0% 0% 0%)`
-  );
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const imgScale = useTransform(dc, (d) => 1 - Math.abs(d) * 0.05);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const textOpacity = useTransform(dc, (d) => 1 - Math.abs(d));
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const titleY = useTransform(dc, (d) => `${d * -8}vh`);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const descY = useTransform(dc, (d) => `${d * -14}vh`);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const btnY = useTransform(dc, (d) => `${d * -20}vh`);
-
-  if (!isAdjacent) return null;
-
-  return (
-    <motion.div className="absolute inset-0 flex items-center justify-center w-full h-full z-10 pointer-events-none">
-      <div className="pointer-events-auto flex flex-col items-center justify-start h-full w-full max-w-[1400px] mx-auto px-6 pt-32 pb-24 gap-2">
-        <motion.span
-          style={{ opacity: textOpacity }}
-          className="pointer-events-none absolute top-[14%] left-1/2 -translate-x-1/2 text-[26vw] font-black text-white/[0.05] select-none cinematic-counter z-0 leading-none"
-        >
-          {counter}
-        </motion.span>
-
-        <motion.div
-          style={{ clipPath: imgClip, scale: imgScale }}
-          className="relative w-full max-w-[320px] aspect-square flex items-center justify-center shrink-0 origin-center z-10 rounded-[28px] overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.7)] bg-[#09090c]"
-        >
-          <Image
-            src={product.image || "/products/fidget-dragon-black.png"}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 320px, 400px"
-            className="object-cover rounded-[28px]"
-          />
-          {product.badge && (
-            <span className="absolute top-3 right-3 bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] font-medium px-3 py-1 rounded-full shadow-2xl z-20">
-              {product.badge}
-            </span>
-          )}
-        </motion.div>
-
-        <div className="w-full h-[60%] flex flex-col justify-start text-center pb-4 overflow-visible z-10">
-          <motion.div style={{ y: titleY, opacity: textOpacity }}>
-            <span className="cinematic-counter inline-flex items-center gap-2 text-white/40 text-[10px] tracking-[0.25em] uppercase mb-2">
-              FRAME {counter}/{COUNTER[total - 1] ?? String(total).padStart(2, "0")}
-              <span className="h-px w-4 bg-white/20" />
-              {product.cat}
-            </span>
-            <h3 className="text-2xl font-extrabold text-white leading-tight mb-2 drop-shadow-lg line-clamp-2">
-              {product.name}
-            </h3>
-          </motion.div>
-
-          <motion.div style={{ y: descY, opacity: textOpacity }}>
-            <p className="text-white/70 text-xs leading-relaxed line-clamp-3 mb-4 max-w-xl mx-auto">
-              {product.description}
-            </p>
-            <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-              {product.specs &&
-                product.specs.slice(0, 3).map((spec, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-[10px] text-white"
-                  >
-                    <span className="text-white/50 ml-1">{spec.k}:</span>
-                    <span className="font-semibold">{spec.v}</span>
-                  </div>
-                ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            style={{ y: btnY, opacity: textOpacity }}
-            className="mt-auto pt-3 border-t border-white/10 flex flex-row items-center justify-between gap-4"
-          >
-            <div className="flex flex-col text-right">
-              {product.oldPrice && (
-                <span className="text-white/50 line-through text-[10px] mb-0.5">
-                  {formatToman(product.oldPrice)}
-                </span>
-              )}
-              <span className="text-xl font-bold text-white drop-shadow-md">
-                {formatToman(product.price)}
-              </span>
-            </div>
-
-            <a
-              href={`/product/${product.id}`}
-              className="bg-white text-black shrink-0 inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-bold transition-transform hover:scale-105 active:scale-95 shadow-[0_10px_30px_rgba(255,255,255,0.2)]"
-            >
-              خرید
-              <ArrowLeft className="w-3.5 h-3.5" />
-            </a>
-          </motion.div>
-        </div>
-      </div>
-    </motion.div>
   );
 }

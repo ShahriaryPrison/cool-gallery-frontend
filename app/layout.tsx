@@ -5,7 +5,6 @@ import { CustomerAuthProvider } from "@/lib/auth";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { LookbookProvider } from "@/components/intro/lookbook-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
-import { CinematicIntro } from "@/components/intro/cinematic-intro";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -35,11 +34,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className="dark antialiased"
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if('scrollRestoration' in history){history.scrollRestoration='manual'}window.scrollTo(0,0);`,
-          }}
-        />
         <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="shortcut icon" href="/logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/logo.png" />
@@ -56,7 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-background text-foreground selection:bg-brand selection:text-white">
         <ScrollToTop />
-        <CinematicIntro />
         <CustomerAuthProvider>
           <CartProvider>
             <LookbookProvider>

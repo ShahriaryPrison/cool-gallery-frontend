@@ -3,28 +3,25 @@ import type { ReactNode } from "react";
 /**
  * Ambient colour blobs sit behind the content and inside the frame, so the
  * glass bars and cards have something to refract instead of flat black.
+ * Optimized with pure static CSS radial gradients for 60fps mobile performance.
  */
 function AmbientGlow() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       <div
-        className="animate-glow-drift absolute -top-32 -right-24 size-[380px] rounded-full lg:size-[560px]"
-        style={{ background: "radial-gradient(circle, #ff2d3c 0%, transparent 68%)", filter: "blur(70px)" }}
+        className="absolute -top-32 -right-24 size-[380px] rounded-full lg:size-[560px] opacity-40"
+        style={{ background: "radial-gradient(circle, rgba(255,45,60,0.4) 0%, transparent 68%)" }}
       />
       <div
-        className="animate-glow-drift absolute top-[38%] -left-32 size-[340px] rounded-full lg:size-[520px]"
+        className="absolute top-[38%] -left-32 size-[340px] rounded-full lg:size-[520px] opacity-35"
         style={{
-          background: "radial-gradient(circle, #7b1fd4 0%, transparent 70%)",
-          filter: "blur(80px)",
-          animationDelay: "-5s",
+          background: "radial-gradient(circle, rgba(123,31,212,0.35) 0%, transparent 70%)",
         }}
       />
       <div
-        className="animate-glow-drift absolute bottom-[6%] -right-20 size-[300px] rounded-full lg:size-[460px]"
+        className="absolute bottom-[6%] -right-20 size-[300px] rounded-full lg:size-[460px] opacity-35"
         style={{
-          background: "radial-gradient(circle, #c4121e 0%, transparent 70%)",
-          filter: "blur(75px)",
-          animationDelay: "-9s",
+          background: "radial-gradient(circle, rgba(196,18,30,0.35) 0%, transparent 70%)",
         }}
       />
     </div>

@@ -365,16 +365,6 @@
   letter-spacing: 0.15em;
 }
 
-/* The title sequence plays once per session. A pre-paint script in the layout
-   stamps this attribute, so a repeat visit never flashes the overlay. */
-[data-intro-done] [data-intro] {
-  display: none !important;
-}
-
-html:not([data-intro-fly-done]) #header-logo-slot {
-  opacity: 0 !important;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-drift,
   .animate-shimmer,

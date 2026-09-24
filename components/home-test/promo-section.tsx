@@ -20,25 +20,14 @@ export function PromoSection() {
       ref={containerRef}
       className="relative min-h-[85vh] flex items-center justify-center py-28 lg:py-40 px-6 overflow-hidden"
     >
-      {/* ─── Cinematic Spotlight (NOT floating orbs) ─── */}
+      {/* ─── Cinematic Spotlight ─── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         {/* Central spotlight cone */}
         <div
-          className="absolute top-1/2 left-1/2 size-[600px] lg:size-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          className="absolute top-1/2 left-1/2 size-[500px] lg:size-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 40%, rgba(255,45,60,0.2) 0%, rgba(255,20,50,0.08) 35%, transparent 65%)",
-            filter: "blur(60px)",
-          }}
-        />
-
-        {/* Directional spotlight sweep */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-full animate-spotlight-sweep"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(255,45,60,0.06) 0%, rgba(255,45,60,0.12) 50%, rgba(255,45,60,0.06) 100%)",
-            filter: "blur(40px)",
+              "radial-gradient(ellipse at 50% 40%, rgba(255,45,60,0.3) 0%, rgba(255,20,50,0.1) 35%, transparent 65%)",
           }}
         />
 

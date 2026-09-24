@@ -7,7 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion, useScroll, useMotionValueEvent } from "motion/react";
 import { Search, UserRound, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
-import { useIntroDone } from "@/components/intro/use-intro-done";
 import { PRODUCTS } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 import { ProductImage } from "@/components/product/product-image";
@@ -148,7 +147,6 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
   const cart = useCart();
-  const introDone = useIntroDone();
   const isHome = pathname === "/" || pathname === "/home-test";
   const { scrollY } = useScroll();
 
@@ -172,7 +170,6 @@ export function Header() {
     }
   });
 
-  const showHeaderContent = !isHome || introDone;
   const showHeaderLogo = !searchOpen && (!isHome || scrolledPastHero);
 
   return (
@@ -194,7 +191,7 @@ export function Header() {
           )}
         >
           <AnimatePresence mode="wait">
-            {showHeaderContent && showHeaderLogo && (
+            {showHeaderLogo && (
               <motion.div
                 key="header-logo"
                 initial={{ opacity: 0, x: 24, scale: 0.85 }}
@@ -228,53 +225,33 @@ export function Header() {
             !showHeaderLogo ? "justify-start" : "justify-center"
           )}
         >
-          <AnimatePresence>
-            {showHeaderContent && (
-              <motion.nav
-                layout
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{
-                  layout: { type: "spring", stiffness: 260, damping: 28, mass: 0.7 },
-                  opacity: { duration: 0.3 },
-                }}
-                className="flex items-center gap-8 py-1"
-              >
-                <Link
-                  href="/"
-                  className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
-                >
-                  صفحه اصلی
-                </Link>
-                <Link
-                  href="/categories"
-                  className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
-                >
-                  دسته‌بندی
-                </Link>
-                <Link
-                  href="/shop"
-                  className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
-                >
-                  محصولات
-                </Link>
-              </motion.nav>
-            )}
-          </AnimatePresence>
+          <nav
+            className="flex items-center gap-8 py-1"
+          >
+            <Link
+              href="/"
+              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+            >
+              صفحه اصلی
+            </Link>
+            <Link
+              href="/categories"
+              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+            >
+              دسته‌بندی
+            </Link>
+            <Link
+              href="/shop"
+              className="text-[13.5px] font-bold text-white transition-colors hover:text-brand"
+            >
+              محصولات
+            </Link>
+          </nav>
         </div>
 
         {/* Left Area: Action Icons (End in RTL) */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-[100px] lg:min-w-[130px]">
-          <AnimatePresence>
-            {showHeaderContent && (
-              <motion.div
-                className="flex items-center gap-2 sm:gap-3"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
+          <div className="flex items-center gap-2 sm:gap-3">
                 {/* Search */}
                 <motion.button
                   type="button"
@@ -314,9 +291,7 @@ export function Header() {
                     <UserRound className="size-[18px]" strokeWidth={2.1} />
                   </motion.div>
                 </Link>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </div>
         </div>
       </header>
 

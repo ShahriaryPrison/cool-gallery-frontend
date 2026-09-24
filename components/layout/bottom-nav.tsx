@@ -40,13 +40,12 @@ const ITEMS: NavItem[] = [
 /** Page-scroll indicator that fills right to left (RTL) flush along the bottom of the nav. */
 function ScrollProgress() {
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 28, restDelta: 0.0005 });
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] w-full overflow-hidden bg-white/10">
       <motion.div
         className="bg-brand h-full w-full shadow-[0_0_12px_rgba(255,45,60,0.95)]"
-        style={{ scaleX, transformOrigin: "right center" }}
+        style={{ scaleX: scrollYProgress, transformOrigin: "right center" }}
       />
     </div>
   );

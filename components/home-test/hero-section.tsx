@@ -4,108 +4,65 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, type Variants } from "motion/react";
 import { ArrowLeft, Flame } from "lucide-react";
-import { useIntroDone, useIntroLanded } from "@/components/intro/use-intro-done";
 
-/** Hero copy enters line by line once the title sequence lifts. */
+/** Hero copy enters cleanly and quickly with pure GPU transforms (no expensive blur filter). */
 const heroLine: Variants = {
-  hidden: { opacity: 0, y: 34, filter: "blur(12px)" },
+  hidden: { opacity: 0, y: 24 },
   show: (i: number) => ({
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: { delay: 0.15 + i * 0.11, duration: 0.85, ease: [0.16, 1, 0.3, 1] },
+    transition: { delay: 0.05 + i * 0.08, duration: 0.65, ease: [0.16, 1, 0.3, 1] },
   }),
 };
 
 export function HeroSection() {
-  const introDone = useIntroDone();
-  const logoLanded = useIntroLanded();
-  const cue = introDone ? "show" : "hidden";
-
   return (
     <section className="relative flex h-[100dvh] min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-[#050507] px-4 pb-12 text-center sm:px-6 lg:h-[100dvh] lg:min-h-[100dvh] lg:px-12 z-10">
       {/* Cinematic Hero Background Image */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <motion.div
-          className="absolute inset-0"
-          initial={{ scale: 1.08, opacity: 0 }}
-          animate={introDone ? { scale: 1, opacity: 0.48 } : { scale: 1.08, opacity: 0 }}
-          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-        >
+        <div className="absolute inset-0">
           <Image
             src="/hero-bg.webp"
             alt="COOL Luxury Dark Accessories"
             fill
             priority
-            quality={95}
-            className="object-cover object-center"
+            quality={80}
+            sizes="100vw"
+            className="object-cover object-center opacity-50"
           />
-        </motion.div>
+        </div>
         {/* Deep atmospheric gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-[#050507]/80" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,5,7,0.15)_0%,rgba(5,5,7,0.75)_75%,rgba(5,5,7,0.98)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,5,7,0.1)_0%,rgba(5,5,7,0.7)_75%,rgba(5,5,7,0.98)_100%)]" />
       </div>
 
-      {/* Dynamic ambient drifting lights */}
+      {/* Dynamic ambient lights (CSS static hardware-accelerated radial gradients) */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {/* Main Brand Glow - Drifts softly in the center */}
-        <motion.div
-          className="absolute top-1/2 left-1/2 size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-[620px]"
+        {/* Center Brand Glow */}
+        <div
+          className="absolute top-1/2 left-1/2 size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-[580px] opacity-40"
           style={{
-            background: "radial-gradient(circle, rgba(255,45,60,0.3) 0%, rgba(255,45,60,0.1) 45%, transparent 70%)",
-            filter: "blur(90px)",
-          }}
-          animate={{
-            x: ["-50%", "-44%", "-54%", "-48%", "-50%"],
-            y: ["-50%", "-56%", "-46%", "-52%", "-50%"],
-            scale: [1, 1.12, 0.94, 1.08, 1],
-          }}
-          transition={{
-            duration: 16,
-            repeat: Infinity,
-            ease: "easeInOut",
+            background: "radial-gradient(circle, rgba(255,45,60,0.3) 0%, rgba(255,45,60,0.08) 45%, transparent 70%)",
           }}
         />
 
-        {/* Secondary Crimson / Ember Orb - Drifts around bottom-right */}
-        <motion.div
-          className="absolute top-[40%] right-[10%] size-[380px] rounded-full sm:size-[520px]"
+        {/* Ember Orb */}
+        <div
+          className="absolute top-[35%] right-[5%] size-[320px] rounded-full sm:size-[460px] opacity-35"
           style={{
-            background: "radial-gradient(circle, rgba(230,20,60,0.22) 0%, rgba(255,80,40,0.08) 50%, transparent 72%)",
-            filter: "blur(80px)",
-          }}
-          animate={{
-            x: [0, 45, -35, 25, 0],
-            y: [0, -35, 40, -20, 0],
-            scale: [0.95, 1.15, 0.9, 1.1, 0.95],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
+            background: "radial-gradient(circle, rgba(230,20,60,0.2) 0%, rgba(255,80,40,0.06) 50%, transparent 70%)",
           }}
         />
 
-        {/* Tertiary Velvet Violet / Dark Ruby Orb - Drifts around top-left */}
-        <motion.div
-          className="absolute bottom-[35%] left-[8%] size-[360px] rounded-full sm:size-[480px]"
+        {/* Ruby Orb */}
+        <div
+          className="absolute bottom-[30%] left-[5%] size-[300px] rounded-full sm:size-[420px] opacity-30"
           style={{
-            background: "radial-gradient(circle, rgba(160,20,90,0.18) 0%, rgba(90,10,60,0.06) 60%, transparent 75%)",
-            filter: "blur(75px)",
-          }}
-          animate={{
-            x: [0, -40, 35, -20, 0],
-            y: [0, 30, -35, 25, 0],
-            scale: [1.05, 0.92, 1.18, 0.96, 1.05],
-          }}
-          transition={{
-            duration: 24,
-            repeat: Infinity,
-            ease: "easeInOut",
+            background: "radial-gradient(circle, rgba(160,20,90,0.18) 0%, rgba(90,10,60,0.05) 60%, transparent 70%)",
           }}
         />
 
-        {/* Subtle vignette to preserve deep edges */}
+        {/* Vignette */}
         <div
           className="absolute inset-0"
           style={{
@@ -115,28 +72,19 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 flex w-full max-w-[680px] flex-col items-center">
-
         {/* Heading */}
         <h1 className="flex flex-col items-center justify-center text-[48px] leading-[1.1] font-black tracking-[-0.03em] text-white sm:text-[58px] lg:text-[78px]">
           <motion.span
-            initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-            animate={
-              introDone
-                ? { opacity: 1, y: 0, filter: "blur(0px)" }
-                : { opacity: 0, y: 24, filter: "blur(10px)" }
-            }
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
           >
             همیشه
           </motion.span>
           <span className="inline-flex items-center justify-center gap-3">
-            {/* Stays invisible until the flying logo lands on it, then swaps in
-                instantly so there is never a second copy on screen. */}
             <span
               id="hero-logo-slot"
-              className={`inline-flex items-center justify-center ${
-                logoLanded ? "opacity-100" : "opacity-0"
-              }`}
+              className="inline-flex items-center justify-center opacity-100"
             >
               <Image
                 src="/logo.png"
@@ -148,13 +96,9 @@ export function HeroSection() {
               />
             </span>
             <motion.span
-              initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-              animate={
-                introDone
-                  ? { opacity: 1, y: 0, filter: "blur(0px)" }
-                  : { opacity: 0, y: 24, filter: "blur(10px)" }
-              }
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
             >
               باش
             </motion.span>
@@ -165,7 +109,7 @@ export function HeroSection() {
           variants={heroLine}
           custom={1}
           initial="hidden"
-          animate={cue}
+          animate="show"
           className="mt-8 flex w-full max-w-[440px] items-center justify-center gap-3 px-2 sm:max-w-[480px] sm:gap-3.5 lg:mt-10"
         >
           <Link href="/shop" className="flex-[1.25] min-w-0">
@@ -190,21 +134,16 @@ export function HeroSection() {
       </div>
 
       {/* Scroll hint — bouncing chevron at the bottom */}
-      <motion.div
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 lg:bottom-8"
-        initial={{ opacity: 0 }}
-        animate={introDone ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
-      >
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 lg:bottom-8">
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-0.5"
+          className="flex flex-col items-center gap-0.5 opacity-70"
         >
           <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-white/25 to-white/50" />
           <div className="size-1.5 rounded-full bg-white/50" />
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }

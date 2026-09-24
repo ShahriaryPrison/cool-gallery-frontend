@@ -26,25 +26,24 @@ const ICON_MAP: Record<string, any> = {
   "ست هدیه": Gift,
 };
 
-// تنظیمات انیمیشن کانتینر (برای ایجاد تاخیر زنجیره‌ای)
+// تنظیمات انیمیشن کانتینر
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1, // فاصله زمانی بین ظاهر شدن هر کارت
+      staggerChildren: 0.04,
     },
   },
 };
 
-// تنظیمات انیمیشن هر کارت
+// تنظیمات انیمیشن هر کارت با ترنزیشن نرم
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  hidden: { opacity: 0, y: 16 },
   visible: { 
     opacity: 1, 
     y: 0, 
-    scale: 1,
-    transition: { type: "spring", stiffness: 60, damping: 12 },
+    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
