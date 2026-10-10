@@ -1,6 +1,6 @@
 import { ShopView } from "@/components/shop/shop-view";
 import { getCategories, getProducts, irrToToman, transformProductSummary } from "@/lib/api";
-import { CATEGORIES, PRODUCTS, type Product } from "@/lib/data";
+import { CATEGORIES, type Product } from "@/lib/data";
 
 export default async function ShopPage({
   searchParams,
@@ -10,7 +10,7 @@ export default async function ShopPage({
   const params = await searchParams;
   const requested = params.cat;
 
-  let loadedProducts: Product[] = PRODUCTS;
+  let loadedProducts: Product[] = [];
   let loadedCategories: string[] = CATEGORIES as unknown as string[];
 
   try {
@@ -43,7 +43,7 @@ export default async function ShopPage({
       }
     }
   } catch (err) {
-    // Graceful fallback to static data if backend is offline or empty
+    console.error("Failed to fetch shop products/categories:", err);
   }
 
   const initialCategory = requested || "همه";

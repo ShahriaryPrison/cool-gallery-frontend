@@ -12,7 +12,7 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getBestSellers, type Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 
 const THEMES = [
@@ -30,7 +30,7 @@ export function DesktopWheelShowcase({
   products?: Product[];
 }) {
   const [active, setActive] = useState(0);
-  const products = initialProducts && initialProducts.length > 0 ? initialProducts.slice(0, 4) : getBestSellers(4);
+  const products = (initialProducts ?? []).slice(0, 4);
   const containerRef = useRef<HTMLElement>(null);
 
   const mouseX = useMotionValue(0);

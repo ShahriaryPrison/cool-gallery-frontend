@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CATEGORIES, PRICE_BANDS, PRODUCTS, type Category, type Product } from "@/lib/data";
+import { CATEGORIES, PRICE_BANDS, type Category, type Product } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ interface ShopViewProps {
 export function ShopView({
   initialCategory = ALL,
   initialQuery = "",
-  products = PRODUCTS,
+  products = [],
   categoriesList = CATEGORIES as unknown as string[],
 }: ShopViewProps) {
   const [cat, setCat] = useState<string>(initialCategory || ALL);

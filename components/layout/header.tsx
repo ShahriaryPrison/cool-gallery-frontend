@@ -7,10 +7,14 @@ import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion, useScroll, useMotionValueEvent } from "motion/react";
 import { Search, UserRound, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
-import { PRODUCTS } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
+import type { Category } from "@/lib/data";
+import type { ProductSummary } from "@/lib/types";
 import { formatToman } from "@/lib/format";
 import { ProductImage } from "@/components/product/product-image";
 import { cn } from "@/lib/utils";
+
+type SearchResult = { id: string; name: string; cat: Category; image?: string; price: number };
 
 /** Mounted only while open, so the query resets on close without an effect. */
 function SearchPanel({ onClose }: { onClose: () => void }) {
@@ -26,9 +30,33 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   }, []);
 
   const q = query.trim();
-  const results = q
-    ? PRODUCTS.filter((p) => p.name.includes(q) || p.cat.includes(q)).slice(0, 6)
-    : [];
+  const { slug } = useAuth();
+  const [found, setFound] = useState<{ q: string; items: SearchResult[] } | null>(null);
+  const results = found && found.q === q ? found.items : [];
+
+  useEffect(() => {
+    if (!q) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      fetch(`/api/customer/${slug}/products?search=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          const items: SearchResult[] = (json?.data ?? []).slice(0, 6).map((p: ProductSummary) => ({
+            id: p.slug || String(p.id),
+            name: p.name,
+            cat: (p.category?.name ?? "") as Category,
+            image: p.images?.[0]?.url,
+            price: p.default_variant ? Math.floor(p.default_variant.base_price / 10) : 0,
+          }));
+          setFound({ q, items });
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [q, slug]);
 
   return (
     <motion.div
@@ -85,7 +113,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
               exit={{ opacity: 0, y: -8 }}
               className="glass-panel mt-2.5 overflow-hidden rounded-2xl p-1.5"
             >
-              {results.length === 0 && (
+              {found?.q === q && results.length === 0 && (
                 <div className="text-ink-4 px-3 py-6 text-center text-[13px]">
                   چیزی پیدا نشد.
                 </div>

@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 
 import { CategoryIcon } from "@/components/product/category-icon";
-import { CATEGORIES, PRODUCTS, type Category } from "@/lib/data";
+import { CATEGORIES, type Category } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 
@@ -29,6 +29,7 @@ const item = {
 export default function CategoriesPage() {
   const auth = useAuth();
   const [categoryList, setCategoryList] = useState<string[]>(CATEGORIES as unknown as string[]);
+  const [productCount, setProductCount] = useState<number | null>(null);
 
   useEffect(() => {
     // Optionally fetch dynamic categories
@@ -38,6 +39,13 @@ export default function CategoriesPage() {
         if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
           setCategoryList(json.data.map((c: any) => c.name));
         }
+      })
+      .catch(() => {});
+
+    fetch(`/api/customer/${auth.slug}/products`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (typeof json?.meta?.total === "number") setProductCount(json.meta.total);
       })
       .catch(() => {});
   }, [auth.slug]);
@@ -57,7 +65,7 @@ export default function CategoriesPage() {
         transition={{ delay: 0.06 }}
         className="text-ink-4 mt-1.5 text-[13px]"
       >
-        مجموعه کامل اکسسوری‌ها، فیجت‌ها و زیورآلات خاص گالری COOL ({toFaDigits(PRODUCTS.length)} کالا)
+        مجموعه کامل اکسسوری‌ها، فیجت‌ها و زیورآلات خاص گالری COOL{productCount !== null && ` (${toFaDigits(productCount)} کالا)`}
       </motion.p>
 
       <motion.div variants={container} initial="hidden" animate="show" className="mt-6 space-y-3">
@@ -79,7 +87,6 @@ export default function CategoriesPage() {
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
           {categoryList.map((cat) => {
-            const count = PRODUCTS.filter((p) => p.cat === cat).length;
             return (
               <motion.div key={cat} variants={item}>
                 <Link href={`/shop?cat=${encodeURIComponent(cat)}`}>
@@ -99,7 +106,6 @@ export default function CategoriesPage() {
                       </span>
                       <div>
                         <div className="text-[14.5px] font-bold text-white">{cat}</div>
-                        <div className="text-ink-4 mt-0.5 text-[11px]">{toFaDigits(count || 1)} محصول</div>
                       </div>
                     </div>
                   </motion.div>

@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, useSpring, type MotionValue } from "mo
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getBestSellers, type Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
 import { formatToman, toFaDigits } from "@/lib/format";
 import { ArrowLeft, Sparkles, Grid } from "lucide-react";
 
@@ -15,7 +15,7 @@ export function StickyCardsShowcase({
 }: {
   products?: Product[];
 }) {
-  const products = (initialProducts && initialProducts.length > 0 ? initialProducts : getBestSellers(10)).slice(0, 10);
+  const products = (initialProducts ?? []).slice(0, 10);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [maxTranslate, setMaxTranslate] = useState(0);

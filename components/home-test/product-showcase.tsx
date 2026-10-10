@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getBestSellers, type Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
@@ -21,7 +21,7 @@ export function ProductShowcase({
 }: {
   products?: Product[];
 }) {
-  const products = initialProducts && initialProducts.length > 0 ? initialProducts.slice(0, 4) : getBestSellers(4);
+  const products = (initialProducts ?? []).slice(0, 4);
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
