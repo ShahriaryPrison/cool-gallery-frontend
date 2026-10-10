@@ -1,148 +1,527 @@
 "use client";
 
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, type Variants } from "motion/react";
-import { ArrowLeft, Flame } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Plus,
+  X,
+  ShoppingCart,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useCart } from "@/components/cart/cart-provider";
+import { PRODUCTS } from "@/lib/data";
+import { formatToman } from "@/lib/format";
 
-/** Hero copy enters cleanly and quickly with pure GPU transforms (no expensive blur filter). */
-const heroLine: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.05 + i * 0.08, duration: 0.65, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
+export interface HotspotPin {
+  id: string;
+  productId: string;
+  tag: string;
+  desktop: { x: string; y: string };
+  mobile: { x: string; y: string };
+}
+
+export interface HeroCategorySlide {
+  id: string;
+  category: string;
+  badge: string;
+  badgeHighlight: string;
+  badgeIcon: "flame" | "sparkles" | "zap";
+  titlePrefix: string;
+  titleHighlight: string;
+  titleSuffix?: string;
+  description: string;
+  ctaText: string;
+  href: string;
+  statsTag: string;
+  image: string;
+  mobileImage: string;
+  alt: string;
+  hotspots: HotspotPin[];
+}
+
+const HERO_SLIDES: HeroCategorySlide[] = [
+  {
+    id: "cat-fidgets",
+    category: "فیجت",
+    badge: "دسته‌بندی فیجت و دکوری‌های خاص",
+    badgeHighlight: "3D ARTICULATED",
+    badgeIcon: "sparkles",
+    titlePrefix: "دنیای فیجت‌های مفصلی و",
+    titleHighlight: "دکوری‌های خاص ۳ بعدی",
+    titleSuffix: "",
+    description:
+      "مجموعه بی‌نظیر از فیگورهای تمام‌مفصلی، اژدهای شب و روز، چرخ‌دنده‌های روان ضد استرس و گجت‌های رومیزی گیمینگ با متریال نشکن و درجه یک.",
+    ctaText: "مشاهده تمام فیجت‌ها",
+    href: "/shop?cat=%D9%81%DB%8C%D8%AC%D8%AA",
+    statsTag: "بیش از ۱۵ مدل مفصلی",
+    image: "/banners/hero-dragon-left.jpg",
+    mobileImage: "/banners/hero-dragon-mobile.jpg",
+    alt: "دسته‌بندی فیجت‌های مفصلی و دکوری اژدها",
+    hotspots: [
+      {
+        id: "spot-f1",
+        productId: "f1",
+        tag: "اژدهای خشم شب",
+        desktop: { x: "18%", y: "54%" },
+        mobile: { x: "36%", y: "28%" },
+      },
+      {
+        id: "spot-f2",
+        productId: "f2",
+        tag: "اژدهای خشم روز",
+        desktop: { x: "34%", y: "48%" },
+        mobile: { x: "68%", y: "22%" },
+      },
+    ],
+  },
+  {
+    id: "cat-vape",
+    category: "ویپ و پاد",
+    badge: "دسته‌بندی پاد و ویپ اورجینال",
+    badgeHighlight: "ORIGINAL PODS",
+    badgeIcon: "zap",
+    titlePrefix: "طعم‌های خنک و اسموت با",
+    titleHighlight: "پادهای اورجینال لیمیتد",
+    titleSuffix: "",
+    description:
+      "انواع پاد و ویپ‌های یکبارمصرف اورجینال با طعم‌رسانی فوق‌العاده، کویل مش پیشرفته، کام‌دهی نرم و طراحی ارگونومیک برای استایل روزمره.",
+    ctaText: "مشاهده تمام پادها",
+    href: "/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87",
+    statsTag: "طعم‌های متنوع و اسموت",
+    image: "/banners/hero-icewave-vape-left.jpg",
+    mobileImage: "/banners/hero-icewave-vape-mobile.jpg",
+    alt: "دسته‌بندی پاد و ویپ یکبار مصرف",
+    hotspots: [
+      {
+        id: "spot-v1",
+        productId: "v1",
+        tag: "۶۰۰ پاف واقعی کویل مش",
+        desktop: { x: "28%", y: "48%" },
+        mobile: { x: "50%", y: "28%" },
+      },
+    ],
+  },
+  {
+    id: "cat-streetwear",
+    category: "استریت‌ویر و کلاه",
+    badge: "کالکشن کلاه و استریت‌ویر",
+    badgeHighlight: "STREETWEAR",
+    badgeIcon: "flame",
+    titlePrefix: "اصالت استایل خیابانی با",
+    titleHighlight: "کلاه و اکسسوری هالیوود",
+    titleSuffix: "",
+    description:
+      "کلاه‌های ترکر لیمیتد ادیشن هالیوود با گلدوزی ۳ بعدی متراکم سیلور، دکمه کراس متالیک ضدزنگ، کتان مرغوب و توری مش ضدتعریق برای استایل‌های گوتیک و دارک.",
+    ctaText: "مشاهده کالکشن کلاه و استایل",
+    href: "/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87",
+    statsTag: "کالکشن خاص و کمیاب",
+    image: "/banners/hero-chrome-hearts-cap-left.jpg",
+    mobileImage: "/banners/hero-chrome-hearts-cap-mobile.jpg",
+    alt: "دسته‌بندی کلاه و استریت‌ویر گوتیک",
+    hotspots: [
+      {
+        id: "spot-c1",
+        productId: "c1",
+        tag: "گلدوزی متالیک ۳ بعدی",
+        desktop: { x: "27%", y: "48%" },
+        mobile: { x: "50%", y: "26%" },
+      },
+    ],
+  },
+];
 
 export function HeroSection() {
+  const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeHotspotId, setActiveHotspotId] = useState<string | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const cart = useCart();
+
+  const total = HERO_SLIDES.length;
+
+  const nextSlide = useCallback(() => {
+    setActiveHotspotId(null);
+    setCurrent((prev) => (prev + 1) % total);
+  }, [total]);
+
+  const prevSlide = useCallback(() => {
+    setActiveHotspotId(null);
+    setCurrent((prev) => (prev - 1 + total) % total);
+  }, [total]);
+
+  const goToSlide = (idx: number) => {
+    setActiveHotspotId(null);
+    setCurrent(idx);
+  };
+
+  // Auto-play interval with pause-on-hover AND pause when a hotspot card is open
+  useEffect(() => {
+    if (isPaused || activeHotspotId !== null) return;
+
+    timerRef.current = setInterval(() => {
+      nextSlide();
+    }, 6000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [nextSlide, isPaused, activeHotspotId]);
+
+  // Touch swipe support for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    // RTL: Swipe left = next, swipe right = prev
+    if (diff > 45) {
+      nextSlide();
+    } else if (diff < -45) {
+      prevSlide();
+    }
+    setTouchStartX(null);
+  };
+
+  const slide = HERO_SLIDES[current];
+
+  // Helper renderer for hotspot pin and popover card
+  const renderHotspot = (spot: HotspotPin, isMobile: boolean) => {
+    const product = PRODUCTS.find((p) => p.id === spot.productId);
+    if (!product) return null;
+    const isOpen = activeHotspotId === spot.id;
+    const pos = isMobile ? spot.mobile : spot.desktop;
+
+    return (
+      <div
+        key={`${spot.id}-${isMobile ? "mob" : "desk"}`}
+        className={cn(
+          "pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 z-30",
+          isMobile ? "block lg:hidden" : "hidden lg:block"
+        )}
+        style={{ left: pos.x, top: pos.y }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Pulsing Target Pin Button */}
+        <motion.button
+          type="button"
+          onClick={() => setActiveHotspotId(isOpen ? null : spot.id)}
+          whileHover={{ scale: 1.18 }}
+          whileTap={{ scale: 0.92 }}
+          className={cn(
+            "relative grid size-8 sm:size-9 place-items-center rounded-full border transition-all duration-300 cursor-pointer",
+            isOpen
+              ? "border-brand bg-brand text-white shadow-[0_0_24px_rgba(255,45,60,0.85)] scale-110"
+              : "border-white/40 bg-black/65 text-white backdrop-blur-md hover:border-brand hover:bg-black/85 shadow-[0_0_16px_rgba(0,0,0,0.6)]"
+          )}
+          aria-label={spot.tag}
+        >
+          {/* Radar pulse rings */}
+          <span className="pointer-events-none absolute -inset-1.5 rounded-full border border-brand/40 animate-ping opacity-60" />
+          <span className="pointer-events-none absolute -inset-3 rounded-full border border-brand/20 animate-pulse" />
+
+          {isOpen ? (
+            <X className="size-4" strokeWidth={2.5} />
+          ) : (
+            <Plus className="size-4 text-brand" strokeWidth={2.5} />
+          )}
+        </motion.button>
+
+        {/* Popover Product Card */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88, y: 10, filter: "blur(6px)" }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.9, y: 8, filter: "blur(4px)" }}
+              transition={{ type: "spring", stiffness: 450, damping: 30 }}
+              className="absolute z-50 mt-3 -translate-x-1/2 w-[230px] sm:w-[250px] rounded-2xl border border-white/18 bg-[#0a0a12]/92 p-3 sm:p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.9),0_0_35px_rgba(255,45,60,0.25)] backdrop-blur-2xl text-right"
+              style={{ left: "50%" }}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-black/50 border border-white/10">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover object-center"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold text-brand block">{spot.tag}</span>
+                  <h4
+                    className="text-[12px] sm:text-[13px] font-black text-white truncate mt-0.5"
+                    title={product.name}
+                  >
+                    {product.name}
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] font-extrabold text-ink-2 mt-0.5">
+                    {formatToman(product.price)}{" "}
+                    <span className="text-[10px] font-normal text-white/50">تومان</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-1.5">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.93 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    cart.addToCart(
+                      product,
+                      product.colors[0]?.label || "",
+                      product.sizes[0] || "",
+                      1
+                    );
+                    cart.open();
+                    setActiveHotspotId(null);
+                  }}
+                  className="glass-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl py-1.5 sm:py-2 text-[11px] sm:text-[12px] font-bold text-white shadow-[0_2px_12px_rgba(255,45,60,0.35)] hover:brightness-110 active:scale-95 cursor-pointer"
+                >
+                  <ShoppingCart className="size-3.5" strokeWidth={2.4} />
+                  <span>خرید سریع</span>
+                </motion.button>
+                <Link
+                  href={`/product/${product.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="glass text-ink-2 hover:text-white grid size-8 sm:size-9 place-items-center rounded-xl transition-colors hover:border-white/30 cursor-pointer"
+                  title="مشاهده جزئیات کامل"
+                >
+                  <ArrowLeft className="size-3.5 sm:size-4" strokeWidth={2.2} />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   return (
-    <section className="relative flex h-[100dvh] min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-[#050507] px-4 pb-12 text-center sm:px-6 lg:h-[100dvh] lg:min-h-[100dvh] lg:px-12 z-10">
-      {/* Cinematic Hero Background Image */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute inset-0">
-          <Image
-            src="/hero-bg.webp"
-            alt="COOL Luxury Dark Accessories"
-            fill
-            priority
-            quality={80}
-            sizes="100vw"
-            className="object-cover object-center opacity-50"
-          />
-        </div>
-        {/* Deep atmospheric gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-[#050507]/80" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,5,7,0.1)_0%,rgba(5,5,7,0.7)_75%,rgba(5,5,7,0.98)_100%)]" />
-      </div>
-
-      {/* Dynamic ambient lights (CSS static hardware-accelerated radial gradients) */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {/* Center Brand Glow */}
-        <div
-          className="absolute top-1/2 left-1/2 size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-[580px] opacity-40"
-          style={{
-            background: "radial-gradient(circle, rgba(255,45,60,0.3) 0%, rgba(255,45,60,0.08) 45%, transparent 70%)",
-          }}
-        />
-
-        {/* Ember Orb */}
-        <div
-          className="absolute top-[35%] right-[5%] size-[320px] rounded-full sm:size-[460px] opacity-35"
-          style={{
-            background: "radial-gradient(circle, rgba(230,20,60,0.2) 0%, rgba(255,80,40,0.06) 50%, transparent 70%)",
-          }}
-        />
-
-        {/* Ruby Orb */}
-        <div
-          className="absolute bottom-[30%] left-[5%] size-[300px] rounded-full sm:size-[420px] opacity-30"
-          style={{
-            background: "radial-gradient(circle, rgba(160,20,90,0.18) 0%, rgba(90,10,60,0.05) 60%, transparent 70%)",
-          }}
-        />
-
-        {/* Vignette */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(5,5,7,0.85) 95%)",
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 flex w-full max-w-[680px] flex-col items-center">
-        {/* Heading */}
-        <h1 className="flex flex-col items-center justify-center text-[48px] leading-[1.1] font-black tracking-[-0.03em] text-white sm:text-[58px] lg:text-[78px]">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+    <section
+      className="relative w-full overflow-hidden select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onClick={() => {
+        if (activeHotspotId) setActiveHotspotId(null);
+      }}
+    >
+      {/* Full-bleed Banner */}
+      <div className="relative w-full min-h-[680px] sm:min-h-[720px] lg:h-[clamp(720px,100svh,1000px)] overflow-hidden bg-[#050507]">
+        {/* Background Image Slides with AnimatePresence */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.id}
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0"
           >
-            همیشه
-          </motion.span>
-          <span className="inline-flex items-center justify-center gap-3">
-            <span
-              id="hero-logo-slot"
-              className="inline-flex items-center justify-center opacity-100"
-            >
+            {/* Desktop Banner (16:9 Landscape) */}
+            <div className="hidden lg:block absolute inset-0">
               <Image
-                src="/logo.png"
-                alt="COOL"
-                width={868}
-                height={336}
+                src={slide.image}
+                alt={slide.alt}
+                fill
                 priority
-                className="h-20 w-auto drop-shadow-[0_0_45px_rgba(255,45,60,0.75)] sm:h-28 lg:h-36"
+                quality={90}
+                sizes="100vw"
+                className="object-cover object-center"
               />
-            </span>
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            >
-              باش
-            </motion.span>
-          </span>
-        </h1>
+            </div>
 
-        <motion.div
-          variants={heroLine}
-          custom={1}
-          initial="hidden"
-          animate="show"
-          className="mt-8 flex w-full max-w-[440px] items-center justify-center gap-3 px-2 sm:max-w-[480px] sm:gap-3.5 lg:mt-10"
-        >
-          <Link href="/shop" className="flex-[1.25] min-w-0">
-            <motion.span
-              whileTap={{ scale: 0.97 }}
-              className="glass-brand flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-4 py-4 text-[13.5px] font-bold text-white shadow-[0_4px_24px_rgba(255,45,60,0.3)] transition-all sm:px-6 sm:text-[14.5px]"
-            >
-              <span>مشاهده همه محصولات</span>
-              <ArrowLeft className="size-4 shrink-0" strokeWidth={2.4} />
-            </motion.span>
-          </Link>
-          <Link href="#bestsellers" className="flex-1 min-w-0">
-            <motion.span
-              whileTap={{ scale: 0.97 }}
-              className="glass text-ink-2 flex items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl px-3 py-4 text-[13.5px] font-medium transition-colors hover:text-white sm:px-5 sm:text-[14.5px]"
-            >
-              <Flame className="size-4 shrink-0 text-brand" />
-              <span>پرفروش‌ترین‌ها</span>
-            </motion.span>
-          </Link>
-        </motion.div>
-      </div>
+            {/* Mobile Banner (3:4 Portrait with Product on Top) */}
+            <div className="block lg:hidden absolute inset-0">
+              <Image
+                src={slide.mobileImage}
+                alt={slide.alt}
+                fill
+                priority
+                quality={90}
+                sizes="100vw"
+                className="object-cover object-top sm:object-center"
+              />
+            </div>
 
-      {/* Scroll hint — bouncing chevron at the bottom */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 lg:bottom-8">
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-0.5 opacity-70"
+            {/* Atmosphere Overlays */}
+            {/* Desktop Right-side Vignette (Darkening right side for Persian RTL text readability) */}
+            <div className="hidden lg:block absolute inset-0 bg-gradient-to-l from-[#050507]/95 via-[#050507]/75 to-transparent" />
+
+            {/* Mobile Bottom Vignette */}
+            <div className="block lg:hidden absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/90 via-50% to-transparent" />
+
+            {/* Subtle red ambient lighting glow around product */}
+            <div
+              className="pointer-events-none absolute top-1/3 left-1/4 size-[400px] rounded-full opacity-35"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(255,45,60,0.35) 0%, rgba(255,45,60,0.05) 50%, transparent 70%)",
+              }}
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Render Interactive Lookbook Hotspots */}
+        <div className="absolute inset-0 z-30 pointer-events-none">
+          {slide.hotspots.map((spot) => (
+            <div key={spot.id}>
+              {renderHotspot(spot, false)}
+              {renderHotspot(spot, true)}
+            </div>
+          ))}
+        </div>
+
+        {/* Content Box (Mobile: Pinned to bottom; Desktop: Vertically centered on right) */}
+        <div className="relative z-20 mx-auto flex h-full min-h-[680px] sm:min-h-[720px] lg:h-full w-full max-w-[1536px] flex-col justify-end lg:justify-center p-5 pb-20 sm:p-8 sm:pb-24 lg:px-20 lg:pt-20 lg:pb-24 pointer-events-none">
+          <div className="w-full sm:max-w-[540px] lg:max-w-[620px] flex flex-col items-start text-right pointer-events-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={slide.id + "-content"}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-start gap-2.5 sm:gap-4.5 w-full"
+              >
+                {/* 2. Category Headline */}
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-[54px] font-black text-white leading-[1.25] tracking-tight drop-shadow-md">
+                  <span>{slide.titlePrefix} </span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand via-[#ff6b74] to-brand-glow drop-shadow-[0_0_24px_rgba(255,45,60,0.6)]">
+                    {slide.titleHighlight}
+                  </span>
+                  {slide.titleSuffix && <span> {slide.titleSuffix}</span>}
+                </h1>
+
+                {/* 3. Description Subtitle */}
+                <p className="text-xs sm:text-base lg:text-[16.5px] text-white/75 leading-relaxed max-w-xl font-normal drop-shadow-sm line-clamp-2 sm:line-clamp-none">
+                  {slide.description}
+                </p>
+
+                {/* 4. Action Row: CTA Button + Stats Tag */}
+                <div className="mt-1 sm:mt-2 flex w-full sm:w-auto items-center gap-2.5 sm:gap-4">
+                  <Link
+                    href={slide.href}
+                    className="flex-1 sm:flex-initial group inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 sm:px-8 py-3 sm:py-4 text-[13.5px] sm:text-[15px] font-bold text-white shadow-[0_0_25px_rgba(255,45,60,0.45)] transition-all hover:bg-brand-deep hover:shadow-[0_0_40px_rgba(255,45,60,0.7)] active:scale-[0.97]"
+                  >
+                    <span>{slide.ctaText}</span>
+                    <ArrowLeft
+                      className="size-4 transition-transform duration-300 group-hover:-translate-x-1"
+                      strokeWidth={2.4}
+                    />
+                  </Link>
+
+                  {/* Stats Tag */}
+                  <div className="shrink-0 flex items-center gap-2 rounded-2xl bg-black/60 border border-white/10 px-3.5 py-2.5 sm:px-4 sm:py-3.5 backdrop-blur-xl shadow-lg">
+                    <span className="flex size-2 rounded-full bg-brand animate-pulse" />
+                    <span className="text-xs sm:text-sm font-bold text-white/90">
+                      {slide.statsTag}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Side Navigation Arrows (Desktop / Tablet) */}
+        <button
+          onClick={nextSlide}
+          aria-label="اسلاید بعدی"
+          className="hidden sm:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-30 size-11 items-center justify-center rounded-2xl bg-black/50 border border-white/15 text-white/70 backdrop-blur-xl transition-all hover:bg-brand hover:text-white hover:border-brand hover:scale-105 shadow-xl cursor-pointer"
         >
-          <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-white/25 to-white/50" />
-          <div className="size-1.5 rounded-full bg-white/50" />
-        </motion.div>
+          <ChevronRight className="size-5" />
+        </button>
+
+        <button
+          onClick={prevSlide}
+          aria-label="اسلاید قبلی"
+          className="hidden sm:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-30 size-11 items-center justify-center rounded-2xl bg-black/50 border border-white/15 text-white/70 backdrop-blur-xl transition-all hover:bg-brand hover:text-white hover:border-brand hover:scale-105 shadow-xl cursor-pointer"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+
+        {/* Bottom Curved Shape — gentle arc rising to the sides */}
+        <svg
+          aria-hidden
+          viewBox="0 0 1440 100"
+          preserveAspectRatio="none"
+          className="pointer-events-none absolute inset-x-0 -bottom-px z-20 h-10 w-full sm:h-16 lg:h-24"
+        >
+          <defs>
+            <linearGradient id="hero-curve-stroke" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#ff2d3c" stopOpacity="0.15" />
+              <stop offset="0.3" stopColor="#ff2d3c" stopOpacity="0.85" />
+              <stop offset="0.7" stopColor="#ff2d3c" stopOpacity="0.85" />
+              <stop offset="1" stopColor="#ff2d3c" stopOpacity="0.15" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,0 C260,100 480,100 720,100 C960,100 1180,100 1440,0 L1440,100 L0,100 Z"
+            className="fill-surface-0"
+          />
+          <path
+            d="M0,0 C260,100 480,100 720,100 C960,100 1180,100 1440,0"
+            fill="none"
+            stroke="url(#hero-curve-stroke)"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+            className="drop-shadow-[0_0_6px_rgba(255,45,60,0.8)]"
+          />
+        </svg>
+
+        {/* Center Tab Notch holding the pagination */}
+        <div className="absolute bottom-[-1px] left-1/2 z-30 -translate-x-1/2">
+          <svg
+            aria-hidden
+            viewBox="0 0 240 44"
+            className="pointer-events-none block h-9 w-[200px] sm:h-11 sm:w-[240px]"
+          >
+            <path
+              d="M0,44 C34,44 48,4 84,2 C96,1 144,1 156,2 C192,4 206,44 240,44 Z"
+              className="fill-surface-0"
+            />
+            <path
+              d="M0,44 C34,44 48,4 84,2 C96,1 144,1 156,2 C192,4 206,44 240,44"
+              fill="none"
+              stroke="#ff2d3c"
+              strokeOpacity="0.55"
+              strokeWidth="1.2"
+              className="drop-shadow-[0_0_5px_rgba(255,45,60,0.7)]"
+            />
+          </svg>
+          <div className="absolute inset-x-0 bottom-2.5 sm:bottom-3.5 flex items-center justify-center gap-2 sm:gap-2.5">
+            {HERO_SLIDES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToSlide(idx);
+                }}
+                aria-label={`رفتن به اسلاید ${idx + 1}`}
+                className={cn(
+                  "h-2 sm:h-2.5 rounded-full transition-all duration-400 cursor-pointer",
+                  idx === current
+                    ? "w-6 sm:w-8 bg-brand shadow-[0_0_14px_#ff2d3c]"
+                    : "w-2 sm:w-2.5 bg-white/30 hover:bg-white/60"
+                )}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

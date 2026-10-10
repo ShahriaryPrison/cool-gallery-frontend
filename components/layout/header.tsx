@@ -150,16 +150,9 @@ export function Header() {
   const isHome = pathname === "/" || pathname === "/home-test";
   const { scrollY } = useScroll();
 
-  const [scrolledPastHero, setScrolledPastHero] = useState(false);
-
-  useEffect(() => {
-    if (!isHome) {
-      setScrolledPastHero(true);
-    } else {
-      const threshold = window.innerHeight * 0.45;
-      setScrolledPastHero(window.scrollY > threshold);
-    }
-  }, [isHome]);
+  const [scrolledPastHero, setScrolledPastHero] = useState(
+    () => !isHome || (typeof window !== "undefined" && window.scrollY > window.innerHeight * 0.45)
+  );
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     if (isHome) {
@@ -170,15 +163,15 @@ export function Header() {
     }
   });
 
-  const showHeaderLogo = !searchOpen && (!isHome || scrolledPastHero);
+  const showHeaderLogo = !searchOpen;
 
   return (
     <>
       <header
         className={cn(
           "sticky top-0 z-50 flex items-center justify-between px-4 py-2 transition-all duration-500 lg:px-8 lg:py-2.5",
-          isHome ? "-mb-[48px] lg:-mb-[56px]" : "",
-          showHeaderLogo
+          isHome ? "-mb-[57px] lg:-mb-[73px]" : "",
+          scrolledPastHero || !isHome
             ? "glass-bar border-b border-white/8 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl bg-[#050507]/80"
             : "border-b border-transparent bg-transparent shadow-none backdrop-blur-none"
         )}
@@ -187,7 +180,7 @@ export function Header() {
         <div
           className={cn(
             "flex items-center justify-start transition-all duration-500",
-            showHeaderLogo ? "min-w-[80px] lg:min-w-[110px]" : "w-0 min-w-0 overflow-hidden"
+            showHeaderLogo ? "min-w-[100px] lg:min-w-[150px]" : "w-0 min-w-0 overflow-hidden"
           )}
         >
           <AnimatePresence mode="wait">
@@ -210,7 +203,7 @@ export function Header() {
                     width={868}
                     height={336}
                     priority
-                    className="h-7 w-auto drop-shadow-[0_0_18px_rgba(255,45,60,0.6)] sm:h-8 lg:h-9"
+                    className="h-9 w-auto drop-shadow-[0_0_18px_rgba(255,45,60,0.6)] sm:h-10 lg:h-12"
                   />
                 </Link>
               </motion.div>
