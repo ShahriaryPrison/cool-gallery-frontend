@@ -9,7 +9,6 @@ import {
   Star,
   ShieldCheck,
   Truck,
-  RotateCcw,
   Minus,
   Plus,
   Check,
@@ -491,10 +490,6 @@ export function ProductDetailView({
                 <span className="flex items-center gap-2">
                   <Truck className="size-3.5 text-brand shrink-0" />
                   <span>ارسال سریع و بسته‌بندی امن</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <RotateCcw className="size-3.5 text-amber-400 shrink-0" />
-                  <span>۷ روز مهلت تعویض و بازگشت</span>
                 </span>
               </div>
             </div>

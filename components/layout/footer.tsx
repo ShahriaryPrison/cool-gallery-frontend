@@ -65,7 +65,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4 text-ink-4 text-[11.5px]">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-emerald-400" /> ۷ روز ضمانت بازگشت</span>
+            <span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-emerald-400" /> تضمین اصالت و کیفیت کالا</span>
             <span className="flex items-center gap-1.5"><Truck className="size-3.5 text-brand" /> ارسال سریع سراسر کشور</span>
           </div>
         </div>

@@ -89,7 +89,7 @@ export default async function ProductPage({
     specs: [
       { k: "اصالت کالا", v: "تضمین ۱۰۰٪ اورجینال" },
       { k: "شناسه محصول", v: defaultVariant?.sku || String(backendProduct?.id || "COOL") },
-      { k: "گارانتی", v: "ضمانت ۷ روز بازگشت وجه" },
+      { k: "ارسال", v: "ارسال سریع به سراسر کشور" },
     ],
   };
 
