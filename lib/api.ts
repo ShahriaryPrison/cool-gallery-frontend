@@ -17,7 +17,7 @@ export const API_BASE =
   "https://api.avval.app/api/v1";
 
 export const DEFAULT_STORE_SLUG =
-  process.env.NEXT_PUBLIC_STORE_SLUG || "cooolglry";
+  process.env.NEXT_PUBLIC_STORE_SLUG || "coolglry";
 
 export const API_KEY =
   process.env.AVVAL_API_KEY ||
