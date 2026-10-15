@@ -47,6 +47,33 @@ export interface HeroCategorySlide {
 
 const HERO_SLIDES: HeroCategorySlide[] = [
   {
+    id: "cat-denim-wallet",
+    category: "کیف و اکسسوری",
+    badge: "طراحی خاص و دست‌دوز",
+    badgeHighlight: "DENIM WALLET",
+    badgeIcon: "sparkles",
+    titlePrefix: "استایل متفاوت و جذاب با",
+    titleHighlight: "کیف پول طرح شلوار جین",
+    titleSuffix: "",
+    description:
+      "کیف پول فانتزی با طرح جیب شلوار جین دوخته‌شده از پارچه لی مرغوب؛ دارای آستر داخلی، ۴ جای کارت مجزا، محفظه اسکناس و پل آویز کلید و اکسسوری.",
+    ctaText: "مشاهده و خرید کیف پول",
+    href: "/product/f-ol-shlo-r-g-n",
+    statsTag: "پارچه لی درجه‌یک · ۴ جای کارت",
+    image: "/banners/hero-denim-wallet-left.jpg",
+    mobileImage: "/banners/hero-denim-wallet-mobile.jpg",
+    alt: "کیف پول طرح شلوار جین لی",
+    hotspots: [
+      {
+        id: "spot-w1",
+        productId: "f-ol-shlo-r-g-n",
+        tag: "پارچه لی با پل آویز کلید",
+        desktop: { x: "28%", y: "50%" },
+        mobile: { x: "50%", y: "30%" },
+      },
+    ],
+  },
+  {
     id: "cat-fidgets",
     category: "فیجت",
     badge: "دسته‌بندی فیجت و دکوری‌های خاص",
