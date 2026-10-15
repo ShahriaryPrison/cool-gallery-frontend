@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useCart } from "@/components/cart/cart-provider";
+import { toastAddResult, useCart } from "@/components/cart/cart-provider";
 import { Reveal } from "@/components/motion/reveal";
 import { irrToToman } from "@/lib/api";
 import { formatToman, toFaDigits } from "@/lib/format";
@@ -341,7 +341,7 @@ export function ProductDetailView({
   const cartQty = currentCartItem?.qty || 0;
 
   // Add initial item to cart
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (backendProduct && activeVariant) {
       const variantOptionLabels = backendProduct.options
         .map((opt) => {
@@ -352,38 +352,40 @@ export function ProductDetailView({
         .filter(Boolean)
         .join(" - ");
 
-      cart.addItem(
-        {
-          variant_id: activeVariant.id,
-          product_id: backendProduct.id,
-          product_slug: backendProduct.slug,
-          name: backendProduct.name,
-          variant_label: variantOptionLabels || "پیش‌فرض",
-          unit_price: priceToman,
-          unit_price_irr: activeVariant.base_price,
-          image: activeImage,
-          stock_quantity: activeVariant.stock_quantity,
-          in_stock: activeVariant.in_stock,
-        },
-        1
+      toastAddResult(
+        await cart.addItem(
+          {
+            variant_id: activeVariant.id,
+            product_id: backendProduct.id,
+            product_slug: backendProduct.slug,
+            name: backendProduct.name,
+            variant_label: variantOptionLabels || "پیش‌فرض",
+            unit_price: priceToman,
+            unit_price_irr: activeVariant.base_price,
+            image: activeImage,
+            stock_quantity: activeVariant.stock_quantity,
+            in_stock: activeVariant.in_stock,
+          },
+          1
+        )
       );
     } else {
-      cart.addToCart(product, "", "", 1);
+      toastAddResult(await cart.addToCart(product, "", "", 1));
     }
-
-    toast.success("به سبد خرید افزوده شد");
   };
 
   // Increment item quantity in cart
-  const handleIncrement = () => {
+  const handleIncrement = async () => {
     if (activeVariant?.id) {
       if (stockQty && cartQty >= stockQty) {
         toast.error("حداکثر موجودی انبار اضافه شده است");
         return;
       }
       cart.updateQty(activeVariant.id, cartQty + 1);
+    } else if (currentCartItem) {
+      cart.updateQty(currentCartItem.variant_id, cartQty + 1);
     } else {
-      cart.addToCart(product, "", "", 1);
+      toastAddResult(await cart.addToCart(product, "", "", 1));
     }
   };
 
@@ -396,12 +398,8 @@ export function ProductDetailView({
       } else {
         cart.updateQty(activeVariant.id, cartQty - 1);
       }
-    } else {
-      if (cartQty <= 1) {
-        cart.bumpLine(product.id, -1);
-      } else {
-        cart.bumpLine(product.id, -1);
-      }
+    } else if (currentCartItem) {
+      cart.updateQty(currentCartItem.variant_id, cartQty - 1);
     }
   };
 

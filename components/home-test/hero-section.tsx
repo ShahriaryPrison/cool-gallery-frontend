@@ -14,7 +14,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/components/cart/cart-provider";
+import { toastAddResult, useCart } from "@/components/cart/cart-provider";
 import { PRODUCTS } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 
@@ -276,16 +276,16 @@ export function HeroSection() {
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.93 }}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    cart.addToCart(
+                    setActiveHotspotId(null);
+                    const result = await cart.addToCart(
                       product,
                       product.colors[0]?.label || "",
                       product.sizes[0] || "",
                       1
                     );
-                    cart.open();
-                    setActiveHotspotId(null);
+                    if (!result.ok) toastAddResult(result);
                   }}
                   className="glass-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl py-1.5 sm:py-2 text-[11px] sm:text-[12px] font-bold text-white shadow-[0_2px_12px_rgba(255,45,60,0.35)] hover:brightness-110 active:scale-95 cursor-pointer"
                 >

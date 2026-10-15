@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
-
-import { useCart } from "@/components/cart/cart-provider";
+import { toastAddResult, useCart } from "@/components/cart/cart-provider";
 import { ProductImage } from "@/components/product/product-image";
 import type { Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
@@ -52,11 +50,13 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
             <motion.button
               type="button"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                cart.addToCart(product, product.colors[0]?.label ?? "", product.sizes[0] ?? "", 1);
-                toast.success("به سبد اضافه شد");
+                toastAddResult(
+                  await cart.addToCart(product, product.colors[0]?.label ?? "", product.sizes[0] ?? "", 1),
+                  "به سبد اضافه شد"
+                );
               }}
               whileTap={{ scale: 0.85 }}
               transition={{ type: "spring", stiffness: 500, damping: 24 }}

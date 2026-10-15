@@ -34,6 +34,12 @@ async function handler(req: NextRequest, { params }: Ctx) {
 
   try {
     const res = await fetch(backendUrl, { method: req.method, headers, body });
+
+    // A 204/205/304 must not carry a body — the Response constructor throws if it does.
+    if (res.status === 204 || res.status === 205 || res.status === 304) {
+      return new NextResponse(null, { status: res.status });
+    }
+
     const text = await res.text();
 
     return new NextResponse(text, {

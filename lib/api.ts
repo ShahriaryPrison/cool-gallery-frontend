@@ -275,6 +275,7 @@ export function transformProductSummary(
 
   return {
     id: p.slug || String(p.id),
+    variantId: defaultVar?.id,
     name: p.name,
     cat: resolvedCat as any,
     price: priceToman,

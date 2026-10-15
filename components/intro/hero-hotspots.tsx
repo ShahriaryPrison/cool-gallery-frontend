@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, X, ShoppingCart, ArrowLeft, Sparkles } from "lucide-react";
 
-import { useCart } from "@/components/cart/cart-provider";
+import { toastAddResult, useCart } from "@/components/cart/cart-provider";
 import { useLookbook } from "@/components/intro/lookbook-provider";
 import { formatToman, toFaDigits } from "@/lib/format";
 import { PRODUCTS, type Product } from "@/lib/data";
@@ -137,15 +137,15 @@ export function HeroHotspots({ introDone }: { introDone: boolean }) {
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.94 }}
-                      onClick={() => {
-                        cart.addToCart(
+                      onClick={async () => {
+                        setActiveId(null);
+                        const result = await cart.addToCart(
                           spot.product,
                           spot.product.colors[0]?.label || "",
                           spot.product.sizes[0] || "",
                           1
                         );
-                        cart.open();
-                        setActiveId(null);
+                        if (!result.ok) toastAddResult(result);
                       }}
                       className="glass-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-bold text-white shadow-[0_2px_12px_rgba(255,45,60,0.3)]"
                     >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
@@ -17,6 +17,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useCart } from "@/components/cart/cart-provider";
 import { formatIrrAsToman, irrToToman } from "@/lib/api";
 import { formatToman, toFaDigits } from "@/lib/format";
 import type { OrderDetail } from "@/lib/types";
@@ -25,10 +26,20 @@ export default function OrderTrackingPage() {
   const params = useParams<{ reference: string }>();
   const reference = params.reference;
   const auth = useAuth();
+  const { refresh: refreshCart } = useCart();
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const refreshedCartRef = useRef(false);
+
+  // A paid order empties the cart on the server; show that.
+  useEffect(() => {
+    if (order?.payment_status === "paid" && !refreshedCartRef.current) {
+      refreshedCartRef.current = true;
+      void refreshCart();
+    }
+  }, [order, refreshCart]);
 
   useEffect(() => {
     if (!reference) return;

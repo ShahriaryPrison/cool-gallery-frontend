@@ -12,6 +12,8 @@ export type ProductBadge = "پرفروش" | "جدید" | "تخفیف" | string;
 
 export interface Product {
   id: string;
+  /** The backend variant bought from cards and quick-buy buttons (the default one). */
+  variantId?: number;
   name: string;
   cat: Category;
   price: number;

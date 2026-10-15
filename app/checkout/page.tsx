@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useCart } from "@/components/cart/cart-provider";
+import { cartNoticeLabel, useCart } from "@/components/cart/cart-provider";
 import { useAuth } from "@/lib/auth";
 import { IRAN_PROVINCES } from "@/lib/iran";
 import { formatToman, toFaDigits } from "@/lib/format";
@@ -43,7 +43,6 @@ export default function CheckoutPage() {
   const [postalCode, setPostalCode] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
-  const [couponInput, setCouponInput] = useState("");
   const [note, setNote] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
@@ -78,8 +77,10 @@ export default function CheckoutPage() {
     }
   };
 
-  const subtotalAfterDiscount = Math.max(0, cart.subtotal - cart.discount);
-  const payable = subtotalAfterDiscount;
+  // Totals come with the server cart; checkout charges the same.
+  const payable = cart.total;
+  const couponDiscount = cart.coupon?.valid ? Math.max(0, cart.discount - cart.offerDiscount) : 0;
+  const hasPurchasable = cart.items.some((i) => i.available !== false);
 
   const handlePlaceOrder = async () => {
     setErrorMessage(null);
@@ -123,12 +124,7 @@ export default function CheckoutPage() {
     }
 
     // 3. Prepare payload
-    const items = cart.items.map((item) => ({
-      variant_id: item.variant_id,
-      qty: item.qty,
-    }));
-
-    if (items.length === 0) {
+    if (!hasPurchasable) {
       toast.error("سبد خرید شما خالی است");
       return;
     }
@@ -136,8 +132,9 @@ export default function CheckoutPage() {
     setSubmitting(true);
     try {
       const idempotencyKey = generateUUID();
+      // No items and no coupon: the server buys the customer's cart as it
+      // holds it, with the code applied to that cart.
       const payload: CheckoutPayload = {
-        items,
         shipping: {
           recipient_name: recipientName.trim(),
           phone: recipientPhone.trim(),
@@ -146,7 +143,6 @@ export default function CheckoutPage() {
           address: address.trim(),
           postal_code: postalCode.trim() || null,
         },
-        coupon_code: couponInput.trim() || cart.couponCode || null,
         note: note.trim() || null,
       };
 
@@ -175,9 +171,35 @@ export default function CheckoutPage() {
     }
   };
 
-  const isCartEmpty = cart.items.length === 0 && cart.lines.length === 0;
+  if (!auth.isLoaded || (auth.token && !cart.isLoaded)) {
+    return (
+      <div className="flex flex-col items-center px-5 pt-24 pb-20 text-center">
+        <div className="size-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <p className="mt-4 text-xs text-white/50">در حال بارگذاری سبد خرید…</p>
+      </div>
+    );
+  }
 
-  if (isCartEmpty) {
+  if (!auth.token) {
+    return (
+      <div className="flex flex-col items-center px-5 pt-24 pb-20 text-center">
+        <span className="grid size-20 place-items-center rounded-[28px] bg-white/5 border border-white/10 shadow-xl">
+          <ShoppingCart className="size-8 text-brand" strokeWidth={1.5} />
+        </span>
+        <p className="mt-5 text-base font-bold text-white">برای ادامه خرید وارد حساب کاربری خود شوید</p>
+        <p className="mt-1.5 text-xs text-white/50">سبد خرید شما در حساب کاربری‌تان نگه داشته می‌شود</p>
+        <button
+          type="button"
+          onClick={() => auth.openLogin("/checkout")}
+          className="mt-6 rounded-2xl bg-gradient-to-r from-brand to-[#e01627] px-7 py-3.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(255,45,60,0.35)] transition-all hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          ورود / ثبت‌نام
+        </button>
+      </div>
+    );
+  }
+
+  if (!hasPurchasable) {
     return (
       <div className="flex flex-col items-center px-5 pt-24 pb-20 text-center">
         <span className="grid size-20 place-items-center rounded-[28px] bg-white/5 border border-white/10 shadow-xl">
@@ -350,21 +372,6 @@ export default function CheckoutPage() {
             />
           </div>
 
-          {/* Coupon Code */}
-          <div>
-            <label className="block text-xs font-medium text-white/80 mb-1.5">
-              کد تخفیف (در صورت وجود)
-            </label>
-            <input
-              type="text"
-              dir="ltr"
-              value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value)}
-              placeholder="مثال: OFF10"
-              className="w-full rounded-2xl bg-[#14141c] border border-white/10 px-4 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand text-right uppercase"
-            />
-          </div>
-
           {/* Order Note */}
           <div>
             <label className="block text-xs font-medium text-white/80 mb-1.5">
@@ -430,6 +437,11 @@ export default function CheckoutPage() {
                   <span className="text-[11px] text-white/40 block mt-0.5">
                     تعداد: {toFaDigits(item.qty)}
                   </span>
+                  {item.notice && (
+                    <span className="text-[11px] font-bold text-amber-400 block mt-0.5">
+                      {cartNoticeLabel(item.notice)}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -450,10 +462,25 @@ export default function CheckoutPage() {
             <span className="font-bold text-white">{formatToman(cart.subtotal)} تومان</span>
           </div>
 
-          {cart.discount > 0 && (
+          {couponDiscount > 0 && (
             <div className="flex items-center justify-between text-emerald-400">
-              <span>تخفیف:</span>
-              <span className="font-bold">−{formatToman(cart.discount)} تومان</span>
+              <span>
+                کد تخفیف <span dir="ltr">{cart.coupon?.code}</span>:
+              </span>
+              <span className="font-bold">−{formatToman(couponDiscount)} تومان</span>
+            </div>
+          )}
+
+          {cart.offerDiscount > 0 && (
+            <div className="flex items-center justify-between text-emerald-400">
+              <span>تخفیف پیشنهاد ویژه:</span>
+              <span className="font-bold">−{formatToman(cart.offerDiscount)} تومان</span>
+            </div>
+          )}
+
+          {cart.coupon && !cart.coupon.valid && (
+            <div className="text-[11px] text-rose-300">
+              {cart.coupon.message ?? "کد تخفیف دیگر برای سبد شما معتبر نیست."}
             </div>
           )}
 

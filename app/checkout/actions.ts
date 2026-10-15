@@ -12,9 +12,11 @@ export interface CheckoutShippingPayload {
 }
 
 export interface CheckoutPayload {
-  items: { variant_id: number; qty: number }[];
+  /** Omit to buy the customer's server-side cart. */
+  items?: { variant_id: number; qty: number }[];
   shipping: CheckoutShippingPayload;
-  coupon_code: string | null;
+  /** Omit to use the code applied to the cart. */
+  coupon_code?: string | null;
   note: string | null;
   gateway?: string | null;
 }

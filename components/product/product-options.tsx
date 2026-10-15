@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Minus, Plus } from "lucide-react";
-import { toast } from "sonner";
 
-import { useCart } from "@/components/cart/cart-provider";
+import { toastAddResult, useCart } from "@/components/cart/cart-provider";
 import type { Product } from "@/lib/data";
 import type { ProductDetail, ProductVariant } from "@/lib/types";
 import { formatIrrAsToman, irrToToman } from "@/lib/api";
@@ -72,7 +71,7 @@ export function ProductOptions({
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (backendProduct && activeVariant) {
       const variantOptionLabels = backendProduct.options
         .map((opt) => {
@@ -89,7 +88,8 @@ export function ProductOptions({
         backendProduct.images?.[0]?.url ||
         product.image;
 
-      cart.addItem(
+      toastAddResult(
+        await cart.addItem(
         {
           variant_id: activeVariant.id,
           product_id: backendProduct.id,
@@ -103,14 +103,17 @@ export function ProductOptions({
           in_stock: activeVariant.in_stock,
         },
         qty
+        ),
+        "محصول با موفقیت به سبد خرید اضافه شد"
       );
     } else {
       const colorLabel = product.colors?.[selColor]?.label ?? "";
       const sizeLabel = product.sizes?.[selSize] ?? "";
-      cart.addToCart(product, colorLabel, sizeLabel, qty);
+      toastAddResult(
+        await cart.addToCart(product, colorLabel, sizeLabel, qty),
+        "محصول با موفقیت به سبد خرید اضافه شد"
+      );
     }
-
-    toast.success("محصول با موفقیت به سبد خرید اضافه شد");
   };
 
   return (

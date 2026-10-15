@@ -63,6 +63,7 @@ export default async function ProductPage({
 
   const displayProduct: Product = {
     id: backendProduct.slug || String(backendProduct.id),
+    variantId: defaultVariant?.id,
     name: productName,
     cat: categoryName,
     price: priceToman,
