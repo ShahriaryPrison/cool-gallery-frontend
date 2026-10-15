@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toastAddResult, useCart } from "@/components/cart/cart-provider";
-import { PRODUCTS } from "@/lib/data";
+import type { Product } from "@/lib/data";
 import { formatToman } from "@/lib/format";
 
 export interface HotspotPin {
@@ -79,91 +79,31 @@ const HERO_SLIDES: HeroCategorySlide[] = [
     badge: "دسته‌بندی فیجت و دکوری‌های خاص",
     badgeHighlight: "3D ARTICULATED",
     badgeIcon: "sparkles",
-    titlePrefix: "دنیای فیجت‌های مفصلی و",
-    titleHighlight: "دکوری‌های خاص ۳ بعدی",
+    titlePrefix: "دکوری خاص ۳ بعدی با",
+    titleHighlight: "فیگور مفصلی بی‌دندون",
     titleSuffix: "",
     description:
-      "مجموعه بی‌نظیر از فیگورهای تمام‌مفصلی، اژدهای شب و روز، چرخ‌دنده‌های روان ضد استرس و گجت‌های رومیزی گیمینگ با متریال نشکن و درجه یک.",
-    ctaText: "مشاهده تمام فیجت‌ها",
-    href: "/shop?cat=%D9%81%DB%8C%D8%AC%D8%AA",
-    statsTag: "بیش از ۱۵ مدل مفصلی",
+      "فیگور اژدهای بی‌دندون چاپ سه‌بعدی با فیلامنت سه‌لایه و مقاوم؛ تمام اجزای بدن مفصلی و متحرک، همراه با چسب زیر کار برای نصب روی سطوح صاف.",
+    ctaText: "مشاهده و خرید فیگور بی‌دندون",
+    href: "/product/f-or-b-dndon-mfsl",
+    statsTag: "تمام مفصلی · طول ۱۳ سانت",
     image: "/banners/hero-dragon-left.jpg",
     mobileImage: "/banners/hero-dragon-mobile.jpg",
     alt: "دسته‌بندی فیجت‌های مفصلی و دکوری اژدها",
     hotspots: [
       {
         id: "spot-f1",
-        productId: "f1",
-        tag: "اژدهای خشم شب",
-        desktop: { x: "18%", y: "54%" },
-        mobile: { x: "36%", y: "28%" },
-      },
-      {
-        id: "spot-f2",
-        productId: "f2",
-        tag: "اژدهای خشم روز",
+        productId: "f-or-b-dndon-mfsl",
+        tag: "تمام اجزا مفصلی و متحرک",
         desktop: { x: "34%", y: "48%" },
         mobile: { x: "68%", y: "22%" },
       },
     ],
   },
-  {
-    id: "cat-vape",
-    category: "ویپ و پاد",
-    badge: "دسته‌بندی پاد و ویپ اورجینال",
-    badgeHighlight: "ORIGINAL PODS",
-    badgeIcon: "zap",
-    titlePrefix: "طعم‌های خنک و اسموت با",
-    titleHighlight: "پادهای اورجینال لیمیتد",
-    titleSuffix: "",
-    description:
-      "انواع پاد و ویپ‌های یکبارمصرف اورجینال با طعم‌رسانی فوق‌العاده، کویل مش پیشرفته، کام‌دهی نرم و طراحی ارگونومیک برای استایل روزمره.",
-    ctaText: "مشاهده تمام پادها",
-    href: "/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87",
-    statsTag: "طعم‌های متنوع و اسموت",
-    image: "/banners/hero-icewave-vape-left.jpg",
-    mobileImage: "/banners/hero-icewave-vape-mobile.jpg",
-    alt: "دسته‌بندی پاد و ویپ یکبار مصرف",
-    hotspots: [
-      {
-        id: "spot-v1",
-        productId: "v1",
-        tag: "۶۰۰ پاف واقعی کویل مش",
-        desktop: { x: "28%", y: "48%" },
-        mobile: { x: "50%", y: "28%" },
-      },
-    ],
-  },
-  {
-    id: "cat-streetwear",
-    category: "استریت‌ویر و کلاه",
-    badge: "کالکشن کلاه و استریت‌ویر",
-    badgeHighlight: "STREETWEAR",
-    badgeIcon: "flame",
-    titlePrefix: "اصالت استایل خیابانی با",
-    titleHighlight: "کلاه و اکسسوری هالیوود",
-    titleSuffix: "",
-    description:
-      "کلاه‌های ترکر لیمیتد ادیشن هالیوود با گلدوزی ۳ بعدی متراکم سیلور، دکمه کراس متالیک ضدزنگ، کتان مرغوب و توری مش ضدتعریق برای استایل‌های گوتیک و دارک.",
-    ctaText: "مشاهده کالکشن کلاه و استایل",
-    href: "/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87",
-    statsTag: "کالکشن خاص و کمیاب",
-    image: "/banners/hero-chrome-hearts-cap-left.jpg",
-    mobileImage: "/banners/hero-chrome-hearts-cap-mobile.jpg",
-    alt: "دسته‌بندی کلاه و استریت‌ویر گوتیک",
-    hotspots: [
-      {
-        id: "spot-c1",
-        productId: "c1",
-        tag: "گلدوزی متالیک ۳ بعدی",
-        desktop: { x: "27%", y: "48%" },
-        mobile: { x: "50%", y: "26%" },
-      },
-    ],
-  },
 ];
 
-export function HeroSection() {
+/** products: the store's live products; hotspots show the one whose slug they name. */
+export function HeroSection({ products = [] }: { products?: Product[] }) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [activeHotspotId, setActiveHotspotId] = useState<string | null>(null);
@@ -224,7 +164,7 @@ export function HeroSection() {
 
   // Helper renderer for hotspot pin and popover card
   const renderHotspot = (spot: HotspotPin, isMobile: boolean) => {
-    const product = PRODUCTS.find((p) => p.id === spot.productId);
+    const product = products.find((p) => p.id === spot.productId);
     if (!product) return null;
     const isOpen = activeHotspotId === spot.id;
     const pos = isMobile ? spot.mobile : spot.desktop;

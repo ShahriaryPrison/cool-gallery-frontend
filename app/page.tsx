@@ -53,7 +53,7 @@ export default async function HomePage() {
   return (
     <div className="bg-surface-0">
         {/* Section 1: Cinematic Hero */}
-        <HeroSection />
+        <HeroSection products={products} />
 
         {/* Section 2: Categories with scrubbable scroll animation */}
         <CategoriesParallax categories={categories} />
