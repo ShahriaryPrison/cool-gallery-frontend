@@ -451,9 +451,10 @@ export function ProductDetailView({
                 )}
               </div>
 
-              <h1 className="text-2xl xl:text-3xl font-black text-white leading-snug tracking-tight mb-4">
+              {/* The mobile layout below owns the page's single <h1> */}
+              <div role="heading" aria-level={1} className="text-2xl xl:text-3xl font-black text-white leading-snug tracking-tight mb-4">
                 {product.name}
-              </h1>
+              </div>
 
               {/* Description */}
               {product.description && (
@@ -548,7 +549,7 @@ export function ProductDetailView({
                       src={activeImage}
                       alt={product.name}
                       fill
-                      priority
+                      fetchPriority="high"
                       quality={90}
                       onLoad={() => setLoadedImages((prev) => ({ ...prev, [activeImage]: true }))}
                       sizes="(min-width: 1024px) 500px, 90vw"
@@ -858,7 +859,7 @@ export function ProductDetailView({
                 src={activeImage}
                 alt={product.name}
                 fill
-                priority
+                fetchPriority="high"
                 sizes="90vw"
                 onLoad={() => setLoadedImages((prev) => ({ ...prev, [activeImage]: true }))}
                 className="object-contain rounded-[24px] pointer-events-none"

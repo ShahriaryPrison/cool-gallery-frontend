@@ -294,7 +294,7 @@ export function HeroSection({ products = [], slides: merchantSlides }: { product
       {/* Full-bleed Banner */}
       <div className="relative w-full min-h-[680px] sm:min-h-[720px] lg:h-[clamp(720px,100svh,1000px)] overflow-hidden bg-[#050507]">
         {/* Background Image Slides with AnimatePresence */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={slide.id}
             initial={{ opacity: 0, scale: 1.03 }}
@@ -309,7 +309,7 @@ export function HeroSection({ products = [], slides: merchantSlides }: { product
                 src={slide.image}
                 alt={slide.alt}
                 fill
-                priority
+                fetchPriority="high"
                 quality={90}
                 sizes="100vw"
                 className="object-cover object-center"
@@ -322,7 +322,7 @@ export function HeroSection({ products = [], slides: merchantSlides }: { product
                 src={slide.mobileImage}
                 alt={slide.alt}
                 fill
-                priority
+                fetchPriority="high"
                 quality={90}
                 sizes="100vw"
                 className="object-cover object-top sm:object-center"
@@ -360,7 +360,7 @@ export function HeroSection({ products = [], slides: merchantSlides }: { product
         {/* Content Box (Mobile: Pinned to bottom; Desktop: Vertically centered on right) */}
         <div className="relative z-20 mx-auto flex h-full min-h-[680px] sm:min-h-[720px] lg:h-full w-full max-w-[1536px] flex-col justify-end lg:justify-center p-5 pb-20 sm:p-8 sm:pb-24 lg:px-20 lg:pt-20 lg:pb-24 pointer-events-none">
           <div className="w-full sm:max-w-[540px] lg:max-w-[620px] flex flex-col items-start text-right pointer-events-auto">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={slide.id + "-content"}
                 initial={{ opacity: 0, y: 18 }}

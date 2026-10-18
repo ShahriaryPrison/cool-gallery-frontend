@@ -134,7 +134,6 @@ export function DesktopWheelShowcase({
                     src={products[active]?.image ?? "/products/fidget-dragon-black.png"}
                     alt={products[active]?.name ?? ""}
                     fill
-                    priority
                     sizes="(min-width: 1280px) 440px, 380px"
                     className="object-cover rounded-[32px] transition-transform duration-500 hover:scale-105"
                   />

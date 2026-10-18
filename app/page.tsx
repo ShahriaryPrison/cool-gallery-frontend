@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HeroSection } from "@/components/home-test/hero-section";
 import { ProductShowcase } from "@/components/home-test/product-showcase";
 import { CategoriesParallax } from "@/components/home-test/categories-parallax";
@@ -8,8 +9,14 @@ import { getCategories, getProducts, getSite, transformProductSummary } from "@/
 import { customContent, slotProducts } from "@/lib/avval-content";
 import { heroSlidesFrom } from "@/lib/hero-content";
 import type { Product } from "@/lib/data";
+import { BASE_OPEN_GRAPH, SITE_DESCRIPTION, SITE_TITLE } from "@/lib/seo";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { ...BASE_OPEN_GRAPH, title: SITE_TITLE, description: SITE_DESCRIPTION, url: "/" },
+};
 
 export default async function HomePage() {
   let products: Product[] = [];

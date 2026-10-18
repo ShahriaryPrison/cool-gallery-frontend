@@ -1,6 +1,30 @@
+import type { Metadata } from "next";
 import { ShopView } from "@/components/shop/shop-view";
 import { getCategories, getProducts, irrToToman, transformProductSummary } from "@/lib/api";
 import { CATEGORIES, type Product } from "@/lib/data";
+import { BASE_OPEN_GRAPH } from "@/lib/seo";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ cat?: string; q?: string }>;
+}): Promise<Metadata> {
+  const { cat, q } = await searchParams;
+  const category = cat && cat !== "همه" ? cat : null;
+  const title = category ? `خرید ${category}` : "فروشگاه — همه محصولات";
+  const description = category
+    ? `خرید آنلاین ${category} با بهترین قیمت و ارسال سریع به سراسر ایران از فروشگاه COOL Gallery.`
+    : "همه محصولات COOL Gallery: فیجت‌های مفصلی، زیورآلات استیل ۳۱۶، انگشتر، دستبند و اکسسوری چرمی با ارسال سریع به سراسر ایران.";
+  const url = category ? `/shop?cat=${encodeURIComponent(category)}` : "/shop";
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { ...BASE_OPEN_GRAPH, title, description, url },
+    // Search results are endless thin variations of the listing
+    robots: q ? { index: false, follow: true } : undefined,
+  };
+}
 
 export default async function ShopPage({
   searchParams,
