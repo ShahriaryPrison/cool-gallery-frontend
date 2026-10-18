@@ -9,7 +9,7 @@ const RUNTIME = 2.9;
 
 export function CinematicIntro() {
   const pathname = usePathname();
-  const isHome = pathname === "/" || pathname === "/home-test";
+  const isHome = pathname === "/";
   const [phase, setPhase] = useState<"playing" | "flying" | "done">(() =>
     isHome ? "playing" : "done"
   );

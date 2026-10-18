@@ -175,7 +175,7 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
   const cart = useCart();
-  const isHome = pathname === "/" || pathname === "/home-test";
+  const isHome = pathname === "/";
   const { scrollY } = useScroll();
 
   const [scrolledPastHero, setScrolledPastHero] = useState(
