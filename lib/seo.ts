@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { getSite } from "./api";
 
 export const SITE_NAME = "COOL Gallery";
 export const SITE_TITLE = "COOL Gallery — فروشگاه تخصصی اکسسوری، فیجت و زیورآلات خاص";
@@ -15,18 +14,11 @@ export const BASE_OPEN_GRAPH = {
   images: [{ url: DEFAULT_OG_IMAGE, alt: SITE_NAME }],
 } satisfies NonNullable<Metadata["openGraph"]>;
 
-/**
- * The public origin used for canonical URLs, the sitemap and Open Graph.
- * NEXT_PUBLIC_SITE_URL wins; otherwise the custom domain set in Avval.
- */
+export const SITE_URL = "https://coolgllry.com";
+
+/** The public origin used for canonical URLs, the sitemap and Open Graph. */
 export async function getSiteUrl(): Promise<string> {
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL;
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
-
-  const domain = (await getSite().catch(() => null))?.custom_domain;
-  if (domain) return /^https?:\/\//.test(domain) ? domain.replace(/\/+$/, "") : `https://${domain}`;
-
-  return `http://localhost:${process.env.PORT || 3000}`;
+  return (process.env.NEXT_PUBLIC_SITE_URL || SITE_URL).replace(/\/+$/, "");
 }
 
 /** Strips HTML and squashes whitespace so backend descriptions fit a meta description. */
