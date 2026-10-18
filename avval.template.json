@@ -5,25 +5,105 @@
       "key": "home.hero",
       "type": "slides",
       "label": "بنر اصلی صفحهٔ اول",
-      "hint": "اسلایدهای بالای صفحهٔ اصلی. اگر اسلایدی نسازید، اسلایدهای خود قالب نمایش داده می‌شوند.",
+      "hint": "اسلایدهای بالای صفحهٔ اصلی. با «بازگشت به محتوای پیش‌فرض قالب» همین اسلایدهای اولیه برمی‌گردند.",
       "max": 5,
-      "fields": ["title_prefix", "title_highlight", "title_suffix", "description", "cta_label", "cta_link", "chip", "image", "mobile_image", "alt", "hotspot"],
-      "image": { "aspect": "16:9" },
-      "mobile_image": { "aspect": "3:4" }
+      "fields": [
+        "title_prefix",
+        "title_highlight",
+        "title_suffix",
+        "description",
+        "cta_label",
+        "cta_link",
+        "chip",
+        "image",
+        "mobile_image",
+        "alt",
+        "hotspot"
+      ],
+      "image": {
+        "aspect": "16:9"
+      },
+      "mobile_image": {
+        "aspect": "3:4"
+      },
+      "default": [
+        {
+          "title_prefix": "استایل متفاوت و جذاب با",
+          "title_highlight": "کیف پول طرح شلوار جین",
+          "description": "کیف پول فانتزی با طرح جیب شلوار جین دوخته‌شده از پارچه لی مرغوب؛ دارای آستر داخلی، ۴ جای کارت مجزا، محفظه اسکناس و پل آویز کلید و اکسسوری.",
+          "cta_label": "مشاهده و خرید کیف پول",
+          "cta_link": "/product/f-ol-shlo-r-g-n",
+          "chip": "پارچه لی درجه‌یک · ۴ جای کارت",
+          "image": {
+            "url": "/banners/hero-denim-wallet-left.jpg"
+          },
+          "mobile_image": {
+            "url": "/banners/hero-denim-wallet-mobile.jpg"
+          },
+          "alt": "کیف پول طرح شلوار جین لی",
+          "hotspot": {
+            "product_slug": "f-ol-shlo-r-g-n",
+            "tag": "پارچه لی با پل آویز کلید",
+            "desktop": {
+              "x": 28,
+              "y": 50
+            },
+            "mobile": {
+              "x": 50,
+              "y": 30
+            }
+          }
+        },
+        {
+          "title_prefix": "دکوری خاص ۳ بعدی با",
+          "title_highlight": "فیگور مفصلی بی‌دندون",
+          "description": "فیگور اژدهای بی‌دندون چاپ سه‌بعدی با فیلامنت سه‌لایه و مقاوم؛ تمام اجزای بدن مفصلی و متحرک، همراه با چسب زیر کار برای نصب روی سطوح صاف.",
+          "cta_label": "مشاهده و خرید فیگور بی‌دندون",
+          "cta_link": "/product/f-or-b-dndon-mfsl",
+          "chip": "تمام مفصلی · طول ۱۳ سانت",
+          "image": {
+            "url": "/banners/hero-dragon-left.jpg"
+          },
+          "mobile_image": {
+            "url": "/banners/hero-dragon-mobile.jpg"
+          },
+          "alt": "دسته‌بندی فیجت‌های مفصلی و دکوری اژدها",
+          "hotspot": {
+            "product_slug": "f-or-b-dndon-mfsl",
+            "tag": "تمام اجزا مفصلی و متحرک",
+            "desktop": {
+              "x": 34,
+              "y": 48
+            },
+            "mobile": {
+              "x": 68,
+              "y": 22
+            }
+          }
+        }
+      ]
     },
     {
       "key": "home.offers",
       "type": "products",
       "label": "پیشنهاد ویژه",
       "hint": "چرخ محصولات زیر دسته‌بندی‌ها. خالی بماند، محصولات تخفیف‌دار (یا چهار محصول آخر) نمایش داده می‌شوند.",
-      "max": 8
+      "max": 8,
+      "default": {
+        "rule": "discounted_or_latest",
+        "count": 4
+      }
     },
     {
       "key": "home.gallery",
       "type": "products",
       "label": "تازه‌های گالری",
       "hint": "ردیف کارت‌های پایین صفحهٔ اصلی. خالی بماند، ده محصول آخر نمایش داده می‌شوند.",
-      "max": 10
+      "max": 10,
+      "default": {
+        "rule": "latest",
+        "count": 10
+      }
     }
   ]
 }

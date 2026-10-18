@@ -6,8 +6,9 @@
  */
 import type { ProductSummary, SiteConfig } from "./types";
 
+/** An uploaded picture (`media_id` + its URL) or one of this template's own (`url` only, a path here). */
 export interface ContentImage {
-  media_id: number;
+  media_id?: number;
   url?: string;
 }
 
