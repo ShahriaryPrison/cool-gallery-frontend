@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "slots": [
+    {
+      "key": "home.hero",
+      "type": "slides",
+      "label": "بنر اصلی صفحهٔ اول",
+      "hint": "اسلایدهای بالای صفحهٔ اصلی. اگر اسلایدی نسازید، اسلایدهای خود قالب نمایش داده می‌شوند.",
+      "max": 5,
+      "fields": ["title_prefix", "title_highlight", "title_suffix", "description", "cta_label", "cta_link", "chip", "image", "mobile_image", "alt", "hotspot"],
+      "image": { "aspect": "16:9" },
+      "mobile_image": { "aspect": "3:4" }
+    },
+    {
+      "key": "home.offers",
+      "type": "products",
+      "label": "پیشنهاد ویژه",
+      "hint": "چرخ محصولات زیر دسته‌بندی‌ها. خالی بماند، محصولات تخفیف‌دار (یا چهار محصول آخر) نمایش داده می‌شوند.",
+      "max": 8
+    },
+    {
+      "key": "home.gallery",
+      "type": "products",
+      "label": "تازه‌های گالری",
+      "hint": "ردیف کارت‌های پایین صفحهٔ اصلی. خالی بماند، ده محصول آخر نمایش داده می‌شوند.",
+      "max": 10
+    }
+  ]
+}

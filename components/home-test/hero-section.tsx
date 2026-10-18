@@ -45,7 +45,8 @@ export interface HeroCategorySlide {
   hotspots: HotspotPin[];
 }
 
-const HERO_SLIDES: HeroCategorySlide[] = [
+/** The template's own slides — shown while the merchant hasn't made any in the Avval editor. */
+export const HERO_SLIDES: HeroCategorySlide[] = [
   {
     id: "cat-denim-wallet",
     category: "کیف و اکسسوری",
@@ -102,8 +103,12 @@ const HERO_SLIDES: HeroCategorySlide[] = [
   },
 ];
 
-/** products: the store's live products; hotspots show the one whose slug they name. */
-export function HeroSection({ products = [] }: { products?: Product[] }) {
+/**
+ * products: the store's live products; hotspots show the one whose slug they name.
+ * slides: the merchant's slides from the Avval editor (lib/hero-content.ts); none → HERO_SLIDES.
+ */
+export function HeroSection({ products = [], slides: merchantSlides }: { products?: Product[]; slides?: HeroCategorySlide[] }) {
+  const slides = merchantSlides && merchantSlides.length > 0 ? merchantSlides : HERO_SLIDES;
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [activeHotspotId, setActiveHotspotId] = useState<string | null>(null);
@@ -111,7 +116,7 @@ export function HeroSection({ products = [] }: { products?: Product[] }) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cart = useCart();
 
-  const total = HERO_SLIDES.length;
+  const total = slides.length;
 
   const nextSlide = useCallback(() => {
     setActiveHotspotId(null);
@@ -160,7 +165,7 @@ export function HeroSection({ products = [] }: { products?: Product[] }) {
     setTouchStartX(null);
   };
 
-  const slide = HERO_SLIDES[current];
+  const slide = slides[current] ?? slides[0];
 
   // Helper renderer for hotspot pin and popover card
   const renderHotspot = (spot: HotspotPin, isMobile: boolean) => {
@@ -392,12 +397,14 @@ export function HeroSection({ products = [] }: { products?: Product[] }) {
                   </Link>
 
                   {/* Stats Tag */}
+                  {slide.statsTag && (
                   <div className="shrink-0 flex items-center gap-2 rounded-2xl bg-black/60 border border-white/10 px-3.5 py-2.5 sm:px-4 sm:py-3.5 backdrop-blur-xl shadow-lg">
                     <span className="flex size-2 rounded-full bg-brand animate-pulse" />
                     <span className="text-xs sm:text-sm font-bold text-white/90">
                       {slide.statsTag}
                     </span>
                   </div>
+                  )}
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -471,7 +478,7 @@ export function HeroSection({ products = [] }: { products?: Product[] }) {
             />
           </svg>
           <div className="absolute inset-x-0 bottom-2.5 sm:bottom-3.5 flex items-center justify-center gap-2 sm:gap-2.5">
-            {HERO_SLIDES.map((_, idx) => (
+            {slides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={(e) => {

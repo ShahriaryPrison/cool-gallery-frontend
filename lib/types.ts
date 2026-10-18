@@ -58,6 +58,8 @@ export interface SiteConfig {
     [key: string]: unknown;
   };
   pages: SitePage[];
+  /** What the merchant filled into this template's slots (see lib/avval-content.ts). */
+  custom_content?: Record<string, unknown>;
   organization: {
     name: string;
     slug: string;
