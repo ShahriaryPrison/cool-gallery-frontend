@@ -31,8 +31,8 @@ const ITEMS: NavItem[] = [
     key: "products",
     label: "محصولات",
     icon: ShoppingBag,
-    href: "/shop",
-    isActive: (p) => p.startsWith("/shop") || p.startsWith("/product"),
+    href: "/products",
+    isActive: (p) => p.startsWith("/products") || p.startsWith("/category/"),
   },
   { key: "cart", label: "سبد", icon: ShoppingCart, isActive: () => false },
 ];
@@ -51,14 +51,17 @@ function ScrollProgress() {
   );
 }
 
+/** A product page (/products/{slug}), not the /products listing. */
+const isProductPage = (p: string) => p.startsWith("/products/");
+
 export function BottomNav() {
   const pathname = usePathname();
   const cart = useCart();
-  const [visible, setVisible] = useState(() => !pathname.startsWith("/product") && pathname !== "/");
+  const [visible, setVisible] = useState(() => !isProductPage(pathname) && pathname !== "/");
 
   useEffect(() => {
     const checkVisibility = () => {
-      if (pathname.startsWith("/product")) {
+      if (isProductPage(pathname)) {
         const scrollHeight = document.documentElement.scrollHeight;
         const scrollPos = window.scrollY + window.innerHeight;
         // Show only when user scrolls near the end of the page (within 420px)

@@ -59,7 +59,7 @@ export const HERO_SLIDES: HeroCategorySlide[] = [
     description:
       "کیف پول فانتزی با طرح جیب شلوار جین دوخته‌شده از پارچه لی مرغوب؛ دارای آستر داخلی، ۴ جای کارت مجزا، محفظه اسکناس و پل آویز کلید و اکسسوری.",
     ctaText: "مشاهده و خرید کیف پول",
-    href: "/product/f-ol-shlo-r-g-n",
+    href: "/products/f-ol-shlo-r-g-n",
     statsTag: "پارچه لی درجه‌یک · ۴ جای کارت",
     image: "/banners/hero-denim-wallet-left.jpg",
     mobileImage: "/banners/hero-denim-wallet-mobile.jpg",
@@ -86,7 +86,7 @@ export const HERO_SLIDES: HeroCategorySlide[] = [
     description:
       "فیگور اژدهای بی‌دندون چاپ سه‌بعدی با فیلامنت سه‌لایه و مقاوم؛ تمام اجزای بدن مفصلی و متحرک، همراه با چسب زیر کار برای نصب روی سطوح صاف.",
     ctaText: "مشاهده و خرید فیگور بی‌دندون",
-    href: "/product/f-or-b-dndon-mfsl",
+    href: "/products/f-or-b-dndon-mfsl",
     statsTag: "تمام مفصلی · طول ۱۳ سانت",
     image: "/banners/hero-dragon-left.jpg",
     mobileImage: "/banners/hero-dragon-mobile.jpg",
@@ -265,7 +265,7 @@ export function HeroSection({ products = [], slides: merchantSlides }: { product
                   <span>خرید سریع</span>
                 </motion.button>
                 <Link
-                  href={`/product/${product.id}`}
+                  href={`/products/${product.id}`}
                   onClick={(e) => e.stopPropagation()}
                   className="glass text-ink-2 hover:text-white grid size-8 sm:size-9 place-items-center rounded-xl transition-colors hover:border-white/30 cursor-pointer"
                   title="مشاهده جزئیات کامل"

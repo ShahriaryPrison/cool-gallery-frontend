@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HeroSection } from "@/components/home-test/hero-section";
 import { ProductShowcase } from "@/components/home-test/product-showcase";
 import { CategoriesParallax } from "@/components/home-test/categories-parallax";
@@ -8,8 +9,12 @@ import { getCategories, getProducts, getSite, transformProductSummary } from "@/
 import { customContent, slotProducts } from "@/lib/avval-content";
 import { heroSlidesFrom } from "@/lib/hero-content";
 import type { Product } from "@/lib/data";
+import { JsonLd, siteNavigationSchema } from "@/lib/seo";
 
 export const revalidate = 60;
+
+// Title, description and share fields come from the root layout.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function HomePage() {
   let products: Product[] = [];
@@ -47,7 +52,8 @@ export default async function HomePage() {
 
   // What the merchant set in the Avval site editor («محتوای قالب»); every slot falls back to the
   // template's own choice when left empty. getSite() shares the 60s cache with the rest of the store.
-  const content = customContent(await getSite().catch(() => null));
+  const site = await getSite().catch(() => null);
+  const content = customContent(site);
   const hero = heroSlidesFrom(content["home.hero"], catMap);
   const toProducts = (list: ReturnType<typeof slotProducts>) =>
     list ? list.map((p) => transformProductSummary(p, catMap)) : null;
@@ -64,6 +70,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-surface-0">
+        {site && <JsonLd data={siteNavigationSchema(site)} />}
         {/* Section 1: Cinematic Hero */}
         <HeroSection products={[...products, ...hero.products]} slides={hero.slides} />
 

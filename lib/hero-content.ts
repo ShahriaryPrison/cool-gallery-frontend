@@ -9,6 +9,11 @@ import { transformProductSummary } from "./api";
 
 const pct = (n: number) => `${n}%`;
 
+/** A link the merchant saved with one of this design's earlier addresses, at the shop's current one. */
+function currentPath(link: string): string {
+  return link.replace(/^\/product\//, "/products/").replace(/^\/shop(?=$|[?#])/, "/products");
+}
+
 export function heroSlidesFrom(
   slides: ContentSlide[] | undefined,
   categoryMap?: Record<number, string>,
@@ -37,7 +42,7 @@ export function heroSlidesFrom(
         titleSuffix: s.title_suffix,
         description: s.description ?? "",
         ctaText: s.cta_label ?? (product ? `مشاهده و خرید ${product.name}` : "مشاهده محصولات"),
-        href: s.cta_link ?? (product ? `/product/${product.id}` : "/shop"),
+        href: s.cta_link ? currentPath(s.cta_link) : product ? `/products/${product.id}` : "/products",
         statsTag: s.chip ?? "",
         image,
         mobileImage: s.mobile_image?.url ?? image,

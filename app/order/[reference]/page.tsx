@@ -97,7 +97,7 @@ export default function OrderTrackingPage() {
         <p className="text-ink-3 text-[13.5px] mt-2 leading-relaxed">{error || "سفارش مورد نظر یافت نشد."}</p>
         <div className="mt-8 flex justify-center gap-3">
           <Link
-            href="/shop"
+            href="/products"
             className="glass-brand rounded-2xl px-6 py-3.5 text-[13.5px] font-bold text-white shadow-[0_4px_16px_rgba(255,45,60,0.25)]"
           >
             بازگشت به فروشگاه
@@ -248,7 +248,7 @@ export default function OrderTrackingPage() {
       {/* Action CTA */}
       <div className="mt-8 flex justify-center gap-3">
         <Link
-          href="/shop"
+          href="/products"
           className="glass-brand rounded-2xl px-7 py-3.5 text-[14px] font-bold text-white shadow-[0_4px_20px_rgba(255,45,60,0.3)] inline-flex items-center gap-2"
         >
           <span>ادامه خرید از فروشگاه</span>

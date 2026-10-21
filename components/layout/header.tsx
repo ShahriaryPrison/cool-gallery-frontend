@@ -88,7 +88,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
               if (e.key === "Escape") onClose();
               if (e.key === "Enter" && q) {
                 onClose();
-                router.push(`/shop?q=${encodeURIComponent(q)}`);
+                router.push(`/products?search=${encodeURIComponent(q)}`);
               }
             }}
             placeholder="دنبال چی می‌گردی؟"
@@ -126,7 +126,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                   transition={{ delay: i * 0.035 }}
                 >
                   <Link
-                    href={`/product/${p.id}`}
+                    href={`/products/${p.id}`}
                     onClick={onClose}
                     className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/6"
                   >
@@ -262,7 +262,7 @@ export function Header() {
               دسته‌بندی
             </Link>
             <Link
-              href="/shop"
+              href="/products"
               className="text-[13px] font-semibold text-white/80 transition-colors hover:text-white"
             >
               محصولات
@@ -303,7 +303,7 @@ export function Header() {
             </motion.button>
 
             {/* Profile */}
-            <Link href="/account" aria-label="حساب کاربری">
+            <Link href="/profile" aria-label="حساب کاربری">
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 500, damping: 28 }}

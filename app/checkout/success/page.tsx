@@ -37,7 +37,7 @@ export default async function CheckoutSuccessPage({
           </Link>
         )}
         <Link
-          href="/shop"
+          href="/products"
           className="glass rounded-2xl py-3.5 text-[14px] font-medium text-ink-2 transition-colors hover:text-white"
         >
           مشاهده سایر محصولات فروشگاه

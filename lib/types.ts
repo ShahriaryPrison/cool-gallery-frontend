@@ -53,6 +53,11 @@ export interface SiteConfig {
       socials?: { platform: string; url: string; handle?: string }[];
     };
     enamad?: { code?: string; link?: string; verification_code?: string } | null;
+    google_search_console?: { verification_code?: string | null } | null;
+    licenses?: {
+      enamad?: { verification_code?: string | null } | null;
+      samandehi?: { verification_code?: string | null } | null;
+    } | null;
     shipping?: { flat_fee?: number; free_over?: number } | null;
     notify_phone?: string;
     [key: string]: unknown;
@@ -63,14 +68,24 @@ export interface SiteConfig {
   organization: {
     name: string;
     slug: string;
-    enamad?: { code?: string; link?: string } | null;
+    enamad?: { code?: string; link?: string; verification_code?: string } | null;
     logo?: string | null;
   };
   features: SiteFeatures;
   payment_gateways?: PaymentGatewayOption[];
   sale_statuses?: SaleStatusOption[];
+  seo_sitelinks?: { label: string; description: string | null; path: string }[];
   published_at: string;
   updated_at: string;
+}
+
+/** The merchant's own SEO for a product or category (panel → سئو); empty fields fall back to the automatic values. */
+export interface SeoMeta {
+  title?: string | null;
+  description?: string | null;
+  keywords?: string[] | null;
+  noindex?: boolean | null;
+  intro?: string | null;
 }
 
 export interface MediaImage {
@@ -135,6 +150,7 @@ export interface ProductDetail {
   images: MediaImage[];
   options: ProductOption[];
   variants: ProductVariant[];
+  seo?: SeoMeta | null;
   category?: {
     id: number;
     name: string;
@@ -149,6 +165,7 @@ export interface Category {
   parent_id: number | null;
   children?: Category[];
   media?: MediaImage[];
+  seo?: SeoMeta | null;
 }
 
 export interface Paginated<T> {

@@ -62,7 +62,7 @@ export function StickyCardsShowcase({
           </div>
 
           <Link
-            href="/shop"
+            href="/products"
             className="group inline-flex items-center gap-2 text-brand text-xs sm:text-sm font-bold bg-brand/10 hover:bg-brand/20 border border-brand/30 px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(255,45,60,0.15)]"
           >
             <span>مشاهده همه</span>
@@ -132,7 +132,7 @@ export function StickyCardsShowcase({
                   </div>
 
                   <Link
-                    href={`/product/${product.id}`}
+                    href={`/products/${product.id}`}
                     className="inline-flex items-center gap-1 text-white bg-white/10 hover:bg-brand px-3 py-1.5 rounded-xl text-xs font-medium transition-colors active:scale-95"
                   >
                     <span>مشاهده</span>
@@ -153,7 +153,7 @@ export function StickyCardsShowcase({
             <h4 className="text-base font-bold text-white mb-2">مشاهده تمام محصولات</h4>
             <p className="text-xs text-white/50 mb-5 leading-relaxed">کالکشن کامل اکسسوری، فیجت و زیورآلات خاص</p>
             <Link
-              href="/shop"
+              href="/products"
               className="bg-brand text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.4)] active:scale-95 transition-transform"
             >
               <span>فروشگاه</span>
@@ -293,7 +293,7 @@ function RunwayCard({
           </div>
 
           <Link
-            href={`/product/${product.id}`}
+            href={`/products/${product.id}`}
             className="group inline-flex items-center gap-1.5 text-white/80 hover:text-white text-xs font-medium transition-colors"
           >
             مشاهده محصول
@@ -340,7 +340,7 @@ function RunwayViewAllCard({
           کالکشن کامل اکسسوری‌های خاص، فیجت‌ها و زیورآلات کول
         </p>
         <Link
-          href="/shop"
+          href="/products"
           className="group inline-flex items-center gap-2.5 bg-brand hover:bg-[#e01627] text-white text-sm font-bold px-7 py-3.5 rounded-2xl shadow-[0_8px_24px_rgba(255,45,60,0.45)] hover:scale-105 active:scale-95 transition-all"
         >
           <span>دیدن همه محصولات</span>

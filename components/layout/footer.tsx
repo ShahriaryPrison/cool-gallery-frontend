@@ -6,10 +6,12 @@ import { AtSign, ShieldCheck, Truck, MapPin, Send } from "lucide-react";
 import { motion } from "motion/react";
 
 const LINKS = [
-  { label: "همه محصولات", href: "/shop" },
+  { label: "همه محصولات", href: "/products" },
   { label: "دسته‌بندی‌ها", href: "/categories" },
-  { label: "ست‌های هدیه", href: "/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87" },
-  { label: "حساب کاربری", href: "/account" },
+  { label: "ست‌های هدیه", href: "/category/kadoie" },
+  { label: "حساب کاربری", href: "/profile" },
+  { label: "درباره ما", href: "/about" },
+  { label: "تماس با ما", href: "/contact" },
 ];
 
 export function Footer() {

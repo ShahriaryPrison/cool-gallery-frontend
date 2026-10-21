@@ -208,7 +208,7 @@ export default function CheckoutPage() {
         <p className="mt-5 text-base font-bold text-white">سبد خرید شما در حال حاضر خالی است</p>
         <p className="mt-1.5 text-xs text-white/50">برای مشاهده محصولات و افزودن به سبد به فروشگاه مراجعه کنید</p>
         <Link
-          href="/shop"
+          href="/products"
           className="mt-6 rounded-2xl bg-gradient-to-r from-brand to-[#e01627] px-7 py-3.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(255,45,60,0.35)] transition-all hover:scale-105 active:scale-95"
         >
           مشاهده محصولات فروشگاه

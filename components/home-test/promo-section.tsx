@@ -87,7 +87,7 @@ export function PromoSection() {
           {/* CTA Action Button */}
           <div className="relative">
             <a
-              href="/shop?cat=%D8%B3%D8%AA%20%D9%87%D8%AF%DB%8C%D9%87"
+              href="/category/kadoie"
               className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-brand to-[#e01627] px-8 py-4 text-sm sm:text-base font-black text-white shadow-[0_8px_30px_rgba(255,45,60,0.45)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_12px_40px_rgba(255,45,60,0.65)] active:scale-95"
             >
               <Gift className="size-4.5 shrink-0 transition-transform group-hover:rotate-12" />

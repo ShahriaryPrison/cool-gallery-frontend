@@ -12,7 +12,7 @@ export function ProductCard({ product }: { product: Product }) {
   const cart = useCart();
 
   return (
-    <Link href={`/product/${product.id}`} className="block h-full">
+    <Link href={`/products/${product.id}`} className="block h-full">
       <motion.div
         whileTap={{ scale: 0.97 }}
         whileHover={{ y: -4 }}

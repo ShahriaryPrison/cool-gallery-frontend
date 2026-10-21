@@ -295,3 +295,15 @@ export function transformProductSummary(
   };
 }
 
+
+/** The current slug of a category that was renamed from `oldSlug` (404s when none). */
+export async function getCategoryRedirect(
+  slug = DEFAULT_STORE_SLUG,
+  oldSlug: string
+): Promise<string> {
+  const res = await get<{ data: { slug: string } }>(
+    slug,
+    `/sites/storefront/category-redirects/${encodeURIComponent(oldSlug)}`
+  );
+  return res.data.slug;
+}

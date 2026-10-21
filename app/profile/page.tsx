@@ -156,7 +156,7 @@ export default function AccountPage() {
 
           <motion.button
             type="button"
-            onClick={() => auth.openLogin("/account")}
+            onClick={() => auth.openLogin("/profile")}
             whileTap={{ scale: 0.98 }}
             className="glass-brand mt-6 w-full rounded-2xl py-4 text-[14.5px] font-bold text-white shadow-[0_4px_24px_rgba(255,45,60,0.35)]"
           >
@@ -165,7 +165,7 @@ export default function AccountPage() {
         </motion.div>
 
         <div className="mt-8 text-center">
-          <Link href="/shop" className="text-brand text-[13px] font-bold hover:underline">
+          <Link href="/products" className="text-brand text-[13px] font-bold hover:underline">
             بازگشت به فروشگاه و محصولات
           </Link>
         </div>
@@ -245,7 +245,7 @@ export default function AccountPage() {
                 <p className="text-ink-2 text-[14.5px] font-bold">هنوز هیچ سفارشی ثبت نکرده‌اید</p>
                 <p className="text-ink-4 text-[12px] mt-1">محصولات مورد نظرتان را انتخاب و خرید کنید.</p>
                 <Link
-                  href="/shop"
+                  href="/products"
                   className="glass-brand inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-[13px] font-bold text-white mt-5"
                 >
                   <span>مشاهده فروشگاه</span>

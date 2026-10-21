@@ -153,7 +153,7 @@ export function HeroHotspots({ introDone }: { introDone: boolean }) {
                       خرید سریع
                     </motion.button>
                     <Link
-                      href={`/product/${spot.product.id}`}
+                      href={`/products/${spot.product.id}`}
                       className="glass text-ink-2 hover:text-white grid size-8 place-items-center rounded-xl transition-colors"
                       title="مشاهده جزئیات"
                     >

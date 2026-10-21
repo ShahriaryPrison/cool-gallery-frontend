@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 
 import { ProductCard } from "@/components/product/product-card";
 import {
@@ -13,11 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CATEGORIES, PRICE_BANDS, type Category, type Product } from "@/lib/data";
+import { PRICE_BANDS, type Product } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const ALL = "همه";
 const SORTS = [
   { key: "new", label: "جدیدترین" },
   { key: "cheap", label: "ارزان‌ترین" },
@@ -28,35 +29,39 @@ const SORTS = [
 type SortKey = (typeof SORTS)[number]["key"];
 
 interface ShopViewProps {
-  initialCategory?: string;
+  title: string;
+  /** The category's intro text from its SEO settings, shown under the title. */
+  intro?: string | null;
   initialQuery?: string;
   products?: Product[];
-  categoriesList?: string[];
+  /** Products in the whole listing, across its pages. */
+  total: number;
+  /** Category pills: each is a real address (/products, /category/{slug}) search engines can follow. */
+  categoryLinks: { label: string; href: string; active: boolean }[];
+  pagination?: { page: number; lastPage: number; prevHref: string | null; nextHref: string | null } | null;
 }
 
 export function ShopView({
-  initialCategory = ALL,
+  title,
+  intro,
   initialQuery = "",
   products = [],
-  categoriesList = CATEGORIES as unknown as string[],
+  total,
+  categoryLinks,
+  pagination,
 }: ShopViewProps) {
-  const [cat, setCat] = useState<string>(initialCategory || ALL);
+  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [sort, setSort] = useState<SortKey>("new");
   const [band, setBand] = useState("all");
   const [onlyOff, setOnlyOff] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const availableCategories = useMemo(() => {
-    return [ALL, ...Array.from(new Set(categoriesList))];
-  }, [categoriesList]);
-
   const items = useMemo(() => {
     const bandDef = PRICE_BANDS.find((b) => b.key === band) || PRICE_BANDS[0];
     const q = query.trim().toLowerCase();
 
     const filtered = products.filter((p) => {
-      const matchCat = cat === ALL || p.cat === cat;
       const matchQuery =
         !q ||
         p.name.toLowerCase().includes(q) ||
@@ -65,7 +70,7 @@ export function ShopView({
       const matchPrice = p.price >= bandDef.lo && p.price < bandDef.hi;
       const matchDiscount = !onlyOff || Boolean(p.oldPrice && p.oldPrice > p.price);
 
-      return matchCat && matchQuery && matchPrice && matchDiscount;
+      return matchQuery && matchPrice && matchDiscount;
     });
 
     const sorters: Record<SortKey, (a: Product, b: Product) => number> = {
@@ -76,9 +81,11 @@ export function ShopView({
     };
 
     return [...filtered].sort(sorters[sort]);
-  }, [products, cat, query, sort, band, onlyOff]);
+  }, [products, query, sort, band, onlyOff]);
 
   const activeFilters = band !== "all" || onlyOff;
+  // Narrowed on this page only: until then the count is the whole listing's.
+  const narrowed = activeFilters || query.trim() !== initialQuery.trim();
 
   return (
     <div className="pt-6 pb-16 lg:pt-10">
@@ -88,53 +95,65 @@ export function ShopView({
         className="px-5 pb-4 lg:px-12"
       >
         <h1 className="text-[30px] leading-tight font-black text-white lg:text-[42px]">
-          {cat === ALL ? "همه محصولات" : cat}
+          {title}
         </h1>
         <div className="text-ink-4 mt-1.5 text-[12.5px]">
-          {toFaDigits(items.length)} محصول یافت شد
+          {toFaDigits(narrowed ? items.length : total)} محصول یافت شد
         </div>
+        {intro && <p className="text-ink-3 mt-3 max-w-3xl text-[13px] leading-7 whitespace-pre-line">{intro}</p>}
       </motion.div>
 
       {/* Live Search Input */}
       <div className="px-5 pb-4 max-w-5xl mx-auto">
-        <div className="glass flex items-center gap-2.5 rounded-2xl px-4 py-3 border border-white/8 focus-within:border-brand/40 transition-colors">
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const q = query.trim();
+            router.push(q ? `/products?search=${encodeURIComponent(q)}` : "/products");
+          }}
+          className="glass flex items-center gap-2.5 rounded-2xl px-4 py-3 border border-white/8 focus-within:border-brand/40 transition-colors"
+        >
           <Search className="text-ink-4 size-[17px] shrink-0" />
           <input
+            type="search"
+            name="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="جست‌وجوی محصول (مثلاً انگشتر، کلاه، دستبند، پاد...)"
             className="text-ink-1 placeholder:text-ink-4 flex-1 bg-transparent text-[13.5px] outline-none font-[family-name:var(--font-sans)]"
           />
-        </div>
+        </form>
       </div>
 
       {/* Category Pills Slider */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-4 max-w-5xl mx-auto lg:flex-wrap lg:justify-center">
-        {availableCategories.map((c) => {
-          const active = cat === c;
-          return (
-            <motion.button
-              key={c}
-              type="button"
-              onClick={() => setCat(c)}
-              whileTap={{ scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+        {categoryLinks.map((c) => (
+          <motion.div
+            key={c.href}
+            whileTap={{ scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 500, damping: 28 }}
+            className="shrink-0"
+          >
+            <Link
+              href={c.href}
+              aria-current={c.active ? "page" : undefined}
               className={cn(
-                "relative shrink-0 rounded-full px-4 py-2 text-[12.5px] font-bold whitespace-nowrap transition-colors",
-                active ? "text-white" : "glass text-ink-3 hover:text-white"
+                "relative block rounded-full px-4 py-2 text-[12.5px] font-bold whitespace-nowrap transition-colors",
+                c.active ? "text-white" : "glass text-ink-3 hover:text-white"
               )}
             >
-              {active && (
+              {c.active && (
                 <motion.span
                   layoutId="cat-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   className="glass-brand absolute inset-0 rounded-full"
                 />
               )}
-              <span className="relative">{c}</span>
-            </motion.button>
-          );
-        })}
+              <span className="relative">{c.label}</span>
+            </Link>
+          </motion.div>
+        ))}
       </div>
 
       {/* Sort & Filter Controls */}
@@ -247,6 +266,36 @@ export function ShopView({
           >
             محصولی با این مشخصات پیدا نشد. فیلترها را تغییر داده یا جست‌وجوی دیگری انجام دهید.
           </motion.div>
+        )}
+
+        {pagination && (
+          <nav aria-label="صفحه‌بندی" className="mt-10 flex items-center justify-center gap-3 text-[12.5px] font-bold">
+            {pagination.prevHref ? (
+              <Link href={pagination.prevHref} rel="prev" className="glass flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-white">
+                <ChevronRight className="size-4" />
+                قبلی
+              </Link>
+            ) : (
+              <span className="glass flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-ink-4 opacity-50">
+                <ChevronRight className="size-4" />
+                قبلی
+              </span>
+            )}
+            <span className="text-ink-3">
+              صفحه {toFaDigits(pagination.page)} از {toFaDigits(pagination.lastPage)}
+            </span>
+            {pagination.nextHref ? (
+              <Link href={pagination.nextHref} rel="next" className="glass flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-white">
+                بعدی
+                <ChevronLeft className="size-4" />
+              </Link>
+            ) : (
+              <span className="glass flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-ink-4 opacity-50">
+                بعدی
+                <ChevronLeft className="size-4" />
+              </span>
+            )}
+          </nav>
         )}
       </div>
     </div>

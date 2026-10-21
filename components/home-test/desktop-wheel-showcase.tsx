@@ -247,7 +247,7 @@ export function DesktopWheelShowcase({
                 transition={{ duration: 0.4, delay: 0.2 }}
               >
                 <Link
-                  href={`/product/${products[active]?.id}`}
+                  href={`/products/${products[active]?.id}`}
                   className="group inline-flex items-center gap-2.5 rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-black shadow-[0_10px_30px_rgba(255,255,255,0.2)] transition-all duration-300 hover:scale-105 hover:shadow-[0_15px_40px_rgba(255,255,255,0.35)] active:scale-95"
                 >
                   <span>مشاهده و خرید</span>

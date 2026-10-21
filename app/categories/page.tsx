@@ -28,7 +28,10 @@ const item = {
 
 export default function CategoriesPage() {
   const auth = useAuth();
-  const [categoryList, setCategoryList] = useState<string[]>(CATEGORIES as unknown as string[]);
+  // Until the shop's categories load, the template's names (without an address of their own yet).
+  const [categoryList, setCategoryList] = useState<{ name: string; slug: string | null }[]>(
+    (CATEGORIES as unknown as string[]).map((name) => ({ name, slug: null }))
+  );
   const [productCount, setProductCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function CategoriesPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
-          setCategoryList(json.data.map((c: any) => c.name));
+          setCategoryList(json.data.map((c: { name: string; slug: string }) => ({ name: c.name, slug: c.slug })));
         }
       })
       .catch(() => {});
@@ -70,7 +73,7 @@ export default function CategoriesPage() {
 
       <motion.div variants={container} initial="hidden" animate="show" className="mt-6 space-y-3">
         <motion.div variants={item}>
-          <Link href="/shop">
+          <Link href="/products">
             <motion.div
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 460, damping: 30 }}
@@ -86,10 +89,10 @@ export default function CategoriesPage() {
         </motion.div>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-          {categoryList.map((cat) => {
+          {categoryList.map(({ name: cat, slug }) => {
             return (
               <motion.div key={cat} variants={item}>
-                <Link href={`/shop?cat=${encodeURIComponent(cat)}`}>
+                <Link href={slug ? `/category/${encodeURIComponent(slug)}` : "/products"}>
                   <motion.div
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: "spring", stiffness: 460, damping: 30 }}

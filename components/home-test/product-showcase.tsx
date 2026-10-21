@@ -117,7 +117,7 @@ export function ProductShowcase({
               </div>
 
               {/* Clickable Card Body linking to Product Detail */}
-              <Link href={`/product/${product.id}`} className="block group">
+              <Link href={`/products/${product.id}`} className="block group">
                 {/* Product Image */}
                 <div className="relative w-full aspect-square rounded-[24px] overflow-hidden bg-black/40 border border-white/10 mb-4 shadow-inner">
                   <Image
@@ -179,7 +179,7 @@ export function ProductShowcase({
                 </div>
 
                 <Link
-                  href={`/product/${product.id}`}
+                  href={`/products/${product.id}`}
                   className="bg-brand text-white font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,45,60,0.35)] active:scale-95 transition-all"
                 >
                   <span>خرید</span>

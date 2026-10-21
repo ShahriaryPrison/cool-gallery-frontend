@@ -411,7 +411,7 @@ export function ProductDetailView({
       {/* ── Top Header Navigation ── */}
       <div className="max-w-[1400px] mx-auto px-5 pt-4 pb-2 lg:px-10 lg:pt-6 flex items-center justify-between z-30 relative">
         <Link
-          href="/shop"
+          href="/products"
           className="glass text-ink-2 hover:text-white inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105 active:scale-95"
         >
           <ArrowRight className="size-3.5" strokeWidth={2.4} />

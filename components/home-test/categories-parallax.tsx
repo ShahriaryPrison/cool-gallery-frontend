@@ -159,7 +159,7 @@ export function CategoriesParallax({
               <motion.a
                 key={i}
                 variants={itemVariants}
-                href={`/shop?cat=${encodeURIComponent(cat.title)}`}
+                href={`/category/${encodeURIComponent(cat.slug)}`}
                 className="relative overflow-hidden flex items-center justify-between bg-[#08080a] border border-white/[0.08] rounded-2xl sm:rounded-3xl p-3 sm:p-4 lg:p-5 group hover:border-[#ff2d3c]/40 hover:bg-[#0c0c0f] hover:shadow-[0_8px_24px_rgba(255,45,60,0.15)] transition-all duration-300"
               >
                 {/* واترمارک بزرگ آیکون در پس‌زمینه (سمت چپ) */}
