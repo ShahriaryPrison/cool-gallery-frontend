@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
   CheckCircle2,
@@ -25,6 +25,8 @@ import type { OrderDetail } from "@/lib/types";
 export default function OrderTrackingPage() {
   const params = useParams<{ reference: string }>();
   const reference = params.reference;
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get("status");
   const auth = useAuth();
   const { refresh: refreshCart } = useCart();
 
@@ -33,30 +35,38 @@ export default function OrderTrackingPage() {
   const [error, setError] = useState<string | null>(null);
   const refreshedCartRef = useRef(false);
 
-  // A paid order empties the cart on the server; show that.
+  // A paid order empties the cart on the server; show that immediately.
   useEffect(() => {
-    if (order?.payment_status === "paid" && !refreshedCartRef.current) {
+    if ((statusParam === "paid" || order?.payment_status === "paid") && !refreshedCartRef.current) {
       refreshedCartRef.current = true;
       void refreshCart();
     }
-  }, [order, refreshCart]);
+  }, [order, statusParam, refreshCart]);
 
   useEffect(() => {
     if (!reference) return;
 
+    // Do not attempt to load until auth has finished reading from storage
+    if (!auth.isLoaded) return;
+
+    if (!auth.token) {
+      setLoading(false);
+      setError("برای مشاهده جزئیات این سفارش لطفاً ابتدا وارد حساب کاربری خود شوید.");
+      return;
+    }
+
     async function loadOrder() {
       try {
         setLoading(true);
-        const headers: Record<string, string> = {};
-        if (auth.token) {
-          headers["Authorization"] = `Bearer ${auth.token}`;
-        }
+        setError(null);
 
         const res = await fetch(`/api/customer/${auth.slug}/orders/${reference}`, {
-          headers,
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
         });
 
-        if (res.status === 401) {
+        if (res.status === 401 || res.status === 403) {
           setError("برای مشاهده جزئیات این سفارش لطفاً ابتدا وارد حساب کاربری خود شوید.");
           return;
         }
@@ -76,9 +86,9 @@ export default function OrderTrackingPage() {
     }
 
     loadOrder();
-  }, [reference, auth.slug, auth.token]);
+  }, [reference, auth.slug, auth.token, auth.isLoaded]);
 
-  if (loading) {
+  if (!auth.isLoaded || loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="size-10 border-2 border-white/20 border-t-brand rounded-full animate-spin" />
@@ -98,15 +108,15 @@ export default function OrderTrackingPage() {
         <div className="mt-8 flex justify-center gap-3">
           <Link
             href="/products"
-            className="glass-brand rounded-2xl px-6 py-3.5 text-[13.5px] font-bold text-white shadow-[0_4px_16px_rgba(255,45,60,0.25)]"
+            className="glass rounded-2xl px-6 py-3.5 text-[13.5px] font-bold text-white hover:bg-white/10"
           >
             بازگشت به فروشگاه
           </Link>
-          {!auth.customer && (
+          {(!auth.token || !auth.customer) && (
             <button
               type="button"
               onClick={() => auth.openLogin(`/order/${reference}`)}
-              className="glass rounded-2xl px-6 py-3.5 text-[13.5px] font-bold text-white hover:bg-white/10"
+              className="glass-brand rounded-2xl px-6 py-3.5 text-[13.5px] font-bold text-white shadow-[0_4px_16px_rgba(255,45,60,0.25)]"
             >
               ورود به حساب کاربری
             </button>

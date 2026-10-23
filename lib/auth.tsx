@@ -65,23 +65,40 @@ export function CustomerAuthProvider({
 
   // Load profile on initial mount if token is stored
   useEffect(() => {
+    let cancelled = false;
     const storedToken = localStorage.getItem(storageKey);
     if (!storedToken) {
       setIsLoaded(true);
       return;
     }
 
+    // Set token immediately so child components and pages have it on first tick
+    setToken(storedToken);
+
     fetchCustomerProfile(slug, storedToken)
       .then((profile) => {
-        setToken(storedToken);
-        setCustomer(profile);
+        if (!cancelled) {
+          setCustomer(profile);
+        }
       })
-      .catch(() => {
-        localStorage.removeItem(storageKey);
-        setToken(null);
-        setCustomer(null);
+      .catch((err) => {
+        if (cancelled) return;
+        // Only clear token if server explicitly rejected it with 401/403
+        if (err?.message === "unauthorized") {
+          localStorage.removeItem(storageKey);
+          setToken(null);
+          setCustomer(null);
+        }
       })
-      .finally(() => setIsLoaded(true));
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoaded(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug, storageKey]);
 
   const openLogin = (path?: string) => {
@@ -280,7 +297,8 @@ export async function fetchCustomerProfile(
   const res = await fetch(`${proxyBase(slug)}/profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("unauthorized");
+  if (res.status === 401 || res.status === 403) throw new Error("unauthorized");
+  if (!res.ok) throw new Error("fetch_failed");
   const { data } = (await res.json()) as { data: Customer };
   return data;
 }
