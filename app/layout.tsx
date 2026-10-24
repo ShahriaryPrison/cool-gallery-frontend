@@ -86,7 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <PersianDigitInputs />
         {site && <JsonLd data={storeSchema(site)} />}
         <ScrollToTop />
-        <SiteFeaturesProvider features={site?.features}>
+        <SiteFeaturesProvider features={site?.features} shippingMethods={site?.shipping_methods}>
         <CustomerAuthProvider>
           <CartProvider>
             <LookbookProvider>

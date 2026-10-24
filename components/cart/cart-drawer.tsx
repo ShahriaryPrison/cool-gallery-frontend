@@ -11,11 +11,15 @@ import { ProductImage } from "@/components/product/product-image";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { formatToman, toFaDigits } from "@/lib/format";
 import { toEnglishDigits } from "@/lib/digits";
-import { CATALOG_ONLY_MESSAGE, useSiteFeatures } from "@/components/site-features";
+import { CATALOG_ONLY_MESSAGE, useShippingMethods, useSiteFeatures } from "@/components/site-features";
+import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
+import { defaultMethod } from "@/lib/checkout/shipping";
 
 export function CartDrawer() {
   const cart = useCart();
   const features = useSiteFeatures();
+  // The first real delivery method is the one checkout starts on; `default` is the free stand-in.
+  const shippingMethod = defaultMethod(useShippingMethods().filter((m) => m.id !== "default"));
   const auth = useAuth();
   const router = useRouter();
   const [couponInput, setCouponInput] = useState("");
@@ -216,6 +220,10 @@ export function CartDrawer() {
                     : offer.headline}
                 </span>
               </div>
+            )}
+
+            {features.checkout && (
+              <FreeShippingBar method={shippingMethod} subtotalIrr={cart.subtotalIrr} coupon={cart.coupon} className="mb-3" />
             )}
 
             {cart.error && <div className="mb-3 text-[11.5px] text-rose-300">{cart.error}</div>}
