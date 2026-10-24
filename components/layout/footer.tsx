@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { AtSign, ShieldCheck, Truck, MapPin, Send } from "lucide-react";
 import { motion } from "motion/react";
+import { TrustBadges } from "@/components/layout/trust-badges";
+import type { TrustBadges as Badges } from "@/lib/licenses";
 
 const LINKS = [
   { label: "همه محصولات", href: "/products" },
@@ -14,7 +16,7 @@ const LINKS = [
   { label: "تماس با ما", href: "/contact" },
 ];
 
-export function Footer() {
+export function Footer({ badges }: { badges?: Badges }) {
   return (
     <footer className="mt-10 px-5 lg:mt-16 lg:px-12 pb-24 overflow-hidden relative z-10">
       <motion.div 
@@ -52,6 +54,13 @@ export function Footer() {
               </Link>
             ))}
           </div>
+
+          {badges && (badges.enamad || badges.samandehi) && (
+            <div className="mt-6 lg:mt-0">
+              <p className="text-ink-4 mb-2.5 text-[11.5px] font-medium">مجوزها و نمادهای اعتماد</p>
+              <TrustBadges badges={badges} />
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/8 pt-5">

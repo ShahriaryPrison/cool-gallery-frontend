@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { PersianDigitInputs } from "@/components/PersianDigitInputs";
 import { SiteFeaturesProvider } from "@/components/site-features";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { resolveTrustBadges } from "@/lib/licenses";
 import { getSite } from "@/lib/api";
 import { JsonLd, pageMetadata, storeBaseUrl, storeSchema } from "@/lib/seo";
 
@@ -92,7 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <SiteFrame>
                 <Header />
                 <main>{children}</main>
-                <Footer />
+                <Footer badges={resolveTrustBadges(site)} />
                 {/* clearance for the floating nav bar on mobile & desktop */}
                 <div className="h-[140px] lg:h-[180px]" aria-hidden />
                 <BottomNav />

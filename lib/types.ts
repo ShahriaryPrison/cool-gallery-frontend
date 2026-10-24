@@ -76,8 +76,14 @@ export interface SiteConfig {
     enamad?: { code?: string; link?: string; verification_code?: string } | null;
     google_search_console?: { verification_code?: string | null } | null;
     licenses?: {
-      enamad?: { verification_code?: string | null } | null;
-      samandehi?: { verification_code?: string | null } | null;
+      enamad?: { enabled?: boolean; code?: string | null; link?: string | null; verification_code?: string | null } | null;
+      samandehi?: {
+        enabled?: boolean;
+        code?: string | null;
+        link?: string | null;
+        badge_image?: string | null;
+        verification_code?: string | null;
+      } | null;
     } | null;
     shipping?: { flat_fee?: number; free_over?: number } | null;
     notify_phone?: string;
