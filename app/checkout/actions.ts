@@ -16,6 +16,8 @@ export interface CheckoutPayload {
   /** Omit to buy the customer's server-side cart. */
   items?: { variant_id: number; qty: number }[];
   shipping: CheckoutShippingPayload;
+  /** The delivery method the buyer picked; omitted on stores without delivery methods. */
+  shipping_method_id?: string;
   /** Omit to use the code applied to the cart. */
   coupon_code?: string | null;
   note: string | null;

@@ -35,10 +35,31 @@ export interface SaleStatusOption {
   sort_order: number;
 }
 
+export interface StorefrontShippingMethod {
+  /** A method id, or `default` before the store has delivery methods. */
+  id: string;
+  type: 'ship' | 'local_delivery';
+  title: string;
+  /** The merchant's short note on the method («تحویل ۲ تا ۴ روز کاری»), shown under its name. */
+  description?: string | null;
+  /** The carrier (post, tipax, chapar, postex…), when the method is a carrier's. */
+  carrier?: string | null;
+  flat_fee: number;
+  free_over: number | null;
+  /** null = every province. */
+  provinces: string[] | null;
+  /** پس‌کرایه: the buyer pays the carrier on delivery; checkout charges nothing for it. */
+  collect_on_delivery?: boolean;
+  /** Booked through Tapin (Iran Post): the buyer's 10-digit postal code is required. */
+  requires_postal_code?: boolean;
+}
+
 export interface SiteConfig {
   name: string;
   theme: string;
   custom_domain: string | null;
+  /** The store's delivery methods; a store without any gets one free «ارسال» (id `default`). */
+  shipping_methods?: StorefrontShippingMethod[];
   settings: {
     primary_color?: string;
     about?: string;
