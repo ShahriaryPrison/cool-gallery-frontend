@@ -13,6 +13,7 @@ import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { Toaster } from "@/components/ui/sonner";
 import { PersianDigitInputs } from "@/components/PersianDigitInputs";
 import { SiteFeaturesProvider } from "@/components/site-features";
+import { PageViewTracker } from "@/components/page-view-tracker";
 import { getSite } from "@/lib/api";
 import { JsonLd, pageMetadata, storeBaseUrl, storeSchema } from "@/lib/seo";
 
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <CartDrawer />
               <AuthModal />
               <Toaster theme="dark" />
+              <PageViewTracker />
             </LookbookProvider>
           </CartProvider>
         </CustomerAuthProvider>
