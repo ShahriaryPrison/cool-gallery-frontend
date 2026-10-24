@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
       { source: "/profile/orders", destination: "/profile", permanent: true },
       { source: "/login", destination: "/profile", permanent: true },
       { source: "/cart", destination: "/checkout", permanent: true },
+      { source: "/club", destination: "/profile", permanent: true },
+      // The old template's link-in-bio page; not permanent, so a real page can take it later.
+      { source: "/links", destination: "/", permanent: false },
     ];
   },
 };
