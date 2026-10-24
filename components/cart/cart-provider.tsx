@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { DEFAULT_STORE_SLUG, irrToToman } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { FREE_SHIPPING_THRESHOLD, type Product } from "@/lib/data";
+import { CATALOG_ONLY_MESSAGE, useSiteFeatures } from "@/components/site-features";
 import type { ProductSummary } from "@/lib/types";
 
 /**
@@ -193,6 +194,7 @@ export function CartProvider({
   const auth = useAuth();
   const token = auth.token;
   const authLoaded = auth.isLoaded;
+  const { checkout: checkoutEnabled } = useSiteFeatures();
 
   const [isOpen, setIsOpen] = useState(false);
   const [cart, setCart] = useState<CartSummary>(EMPTY_CART);
@@ -280,6 +282,8 @@ export function CartProvider({
   const addItem = useCallback<CartContextValue["addItem"]>(
     async (item, qty = 1) => {
       setError(null);
+      // Catalog-only store: nothing goes in a cart it can't check out.
+      if (!checkoutEnabled) return { ok: false, reason: "error", message: CATALOG_ONLY_MESSAGE };
       const line = { variant_id: item.variant_id, qty: Math.max(1, Math.min(qty, 100)) };
 
       if (!token) {
@@ -296,7 +300,7 @@ export function CartProvider({
       setIsOpen(true);
       return { ok: true };
     },
-    [auth, request, token]
+    [auth, checkoutEnabled, request, token]
   );
 
   const addToCart = useCallback<CartContextValue["addToCart"]>(

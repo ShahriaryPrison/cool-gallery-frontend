@@ -12,6 +12,7 @@ import { SiteFrame } from "@/components/layout/site-frame";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { Toaster } from "@/components/ui/sonner";
 import { PersianDigitInputs } from "@/components/PersianDigitInputs";
+import { SiteFeaturesProvider } from "@/components/site-features";
 import { getSite } from "@/lib/api";
 import { JsonLd, pageMetadata, storeBaseUrl, storeSchema } from "@/lib/seo";
 
@@ -83,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <PersianDigitInputs />
         {site && <JsonLd data={storeSchema(site)} />}
         <ScrollToTop />
+        <SiteFeaturesProvider features={site?.features}>
         <CustomerAuthProvider>
           <CartProvider>
             <LookbookProvider>
@@ -100,6 +102,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </LookbookProvider>
           </CartProvider>
         </CustomerAuthProvider>
+        </SiteFeaturesProvider>
       </body>
     </html>
   );

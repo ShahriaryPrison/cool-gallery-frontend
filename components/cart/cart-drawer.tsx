@@ -11,9 +11,11 @@ import { ProductImage } from "@/components/product/product-image";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { formatToman, toFaDigits } from "@/lib/format";
 import { toEnglishDigits } from "@/lib/digits";
+import { CATALOG_ONLY_MESSAGE, useSiteFeatures } from "@/components/site-features";
 
 export function CartDrawer() {
   const cart = useCart();
+  const features = useSiteFeatures();
   const auth = useAuth();
   const router = useRouter();
   const [couponInput, setCouponInput] = useState("");
@@ -144,6 +146,7 @@ export function CartDrawer() {
 
         {cart.lines.length > 0 && (
           <motion.div layout className="mt-4 shrink-0 border-t border-white/8 pt-4">
+            {features.coupons && (<>
             {cart.coupon ? (
               <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-md">
                 <div className="min-w-0 text-[12px]">
@@ -202,6 +205,7 @@ export function CartDrawer() {
                 </motion.div>
               )}
             </AnimatePresence>
+            </>)}
 
             {cart.offer.eligible && offer && (
               <div className="mb-3 flex items-start gap-2 rounded-2xl border border-dashed border-brand/40 bg-brand/5 p-3 text-[11.5px] font-bold leading-6 text-white">
@@ -236,6 +240,22 @@ export function CartDrawer() {
               </motion.span>
             </div>
 
+            {!features.checkout ? (
+              <>
+                <p className="text-ink-3 mb-2.5 text-center text-[11.5px]">{CATALOG_ONLY_MESSAGE}</p>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    cart.close();
+                    router.push("/contact");
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-brand w-full rounded-2xl py-3.5 text-[14px] font-bold text-white"
+                >
+                  سفارش / تماس با فروشنده
+                </motion.button>
+              </>
+            ) : (
             <motion.button
               type="button"
               onClick={() => {
@@ -249,6 +269,7 @@ export function CartDrawer() {
             >
               تکمیل خرید و ثبت سفارش
             </motion.button>
+            )}
           </motion.div>
         )}
       </DrawerContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 
 import { cartNoticeLabel, useCart } from "@/components/cart/cart-provider";
 import { CouponBox } from "@/components/cart/coupon-box";
+import { CATALOG_ONLY_MESSAGE, useSiteFeatures } from "@/components/site-features";
 import { useAuth } from "@/lib/auth";
 import { IRAN_PROVINCES } from "@/lib/iran";
 import { formatToman, toFaDigits } from "@/lib/format";
@@ -52,6 +54,10 @@ interface CheckoutViewProps {
 export function CheckoutView({ site }: CheckoutViewProps) {
   const cart = useCart();
   const auth = useAuth();
+  const router = useRouter();
+  const features = useSiteFeatures();
+  // Online payment off: the order is placed without a bank gateway and the merchant follows up.
+  const payOnline = features.online_payment;
 
   const [province, setProvince] = useState("");
   const [city, setCity] = useState("");
@@ -77,7 +83,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
   const postalRequired = method?.requires_postal_code === true;
 
   // Gateways from site
-  const gateways = site?.payment_gateways ?? [];
+  const gateways = payOnline ? site?.payment_gateways ?? [] : [];
   const [gateway, setGateway] = useState<string | null>(() =>
     resolveInitialGateway(gateways)
   );
@@ -232,7 +238,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
           postal_code: normalizedPostal,
         },
         ...(method ? { shipping_method_id: method.id } : {}),
-        gateway: gateway || null,
+        ...(payOnline ? { gateway: gateway || null } : {}),
         note: note.trim() || null,
       };
 
@@ -246,6 +252,10 @@ export function CheckoutView({ site }: CheckoutViewProps) {
       if (result.success && result.data?.payment_url) {
         toast.success("در حال انتقال به درگاه پرداخت رسمی...");
         window.location.href = result.data.payment_url;
+      } else if (result.success && result.data?.order_reference) {
+        // No gateway to send the buyer to (online payment off): the order page takes it from here.
+        toast.success("سفارش شما ثبت شد");
+        router.push(`/order/${encodeURIComponent(result.data.order_reference)}`);
       } else {
         const msg = result.message || "ثبت سفارش با خطا مواجه شد. لطفاً اطلاعات را بررسی نمایید.";
         setErrorMessage(msg);
@@ -260,6 +270,23 @@ export function CheckoutView({ site }: CheckoutViewProps) {
       setSubmitting(false);
     }
   };
+
+  if (!features.checkout) {
+    return (
+      <div className="flex flex-col items-center px-5 pt-24 pb-20 text-center">
+        <span className="grid size-20 place-items-center rounded-[28px] bg-white/5 border border-white/10 shadow-xl">
+          <ShoppingCart className="size-8 text-brand" strokeWidth={1.5} />
+        </span>
+        <p className="mt-5 text-base font-bold text-white">{CATALOG_ONLY_MESSAGE}</p>
+        <Link
+          href="/contact"
+          className="mt-6 rounded-2xl bg-gradient-to-r from-brand to-[#e01627] px-7 py-3.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(255,45,60,0.35)] transition-all hover:scale-105 active:scale-95"
+        >
+          سفارش / تماس با فروشنده
+        </Link>
+      </div>
+    );
+  }
 
   if (!auth.isLoaded || (auth.token && !cart.isLoaded)) {
     return (
@@ -328,7 +355,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
       {/* Main Title */}
       <div className="mb-6 text-right">
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-          تکمیل سفارش و پرداخت
+          {payOnline ? "تکمیل سفارش و پرداخت" : "تکمیل و ثبت سفارش"}
         </h1>
         <p className="mt-1.5 text-xs sm:text-sm text-white/60">
           لطفاً مشخصات تحویل و روش ارسال را انتخاب کرده و سفارش خود را نهایی کنید.
@@ -607,10 +634,10 @@ export function CheckoutView({ site }: CheckoutViewProps) {
           {submitting ? (
             <div className="flex items-center gap-2">
               <div className="size-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>در حال اتصال به درگاه پرداخت...</span>
+              <span>{payOnline ? "در حال اتصال به درگاه پرداخت..." : "در حال ثبت سفارش..."}</span>
             </div>
           ) : (
-            <span>ثبت سفارش و پرداخت آنلاین</span>
+            <span>{payOnline ? "ثبت سفارش و پرداخت آنلاین" : "ثبت سفارش"}</span>
           )}
         </motion.button>
       </div>
@@ -665,7 +692,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
         </div>
 
         {/* Coupon Box on Checkout */}
-        <CouponBox className="mt-5 pt-4 border-t border-white/10" />
+        {features.coupons && <CouponBox className="mt-5 pt-4 border-t border-white/10" />}
 
         {/* Pricing Subtotal, Shipping, and Payable */}
         <div className="mt-4 pt-4 border-t border-white/10 space-y-2.5 text-xs sm:text-sm">
@@ -730,10 +757,12 @@ export function CheckoutView({ site }: CheckoutViewProps) {
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/40">
-          <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
-          <span>اتصال مستقیم و امن به درگاه رسمی شاپرک</span>
-        </div>
+        {payOnline && (
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/40">
+            <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
+            <span>اتصال مستقیم و امن به درگاه رسمی شاپرک</span>
+          </div>
+        )}
       </div>
     </div>
   );
