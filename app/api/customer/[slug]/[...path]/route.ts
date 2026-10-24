@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { englishDigitsInUrl, toEnglishDigits } from "@/lib/digits";
 
 const API =
   process.env.AVVAL_API_URL ||
@@ -10,12 +11,13 @@ type Ctx = { params: Promise<{ slug: string; path: string[] }> };
 async function handler(req: NextRequest, { params }: Ctx) {
   const { slug, path } = await params;
   const pathStr = path.join("/");
+  const search = englishDigitsInUrl(req.nextUrl.search);
   
   // Route to customer endpoint or general storefront endpoint if requested
   const isDirectStorefront = pathStr.startsWith("categories") || pathStr.startsWith("products");
   const endpoint = isDirectStorefront
-    ? `${API}/${slug}/sites/storefront/${pathStr}${req.nextUrl.search}`
-    : `${API}/${slug}/sites/storefront/customer/${pathStr}${req.nextUrl.search}`;
+    ? `${API}/${slug}/sites/storefront/${pathStr}${search}`
+    : `${API}/${slug}/sites/storefront/customer/${pathStr}${search}`;
 
   const backendUrl = endpoint;
 
@@ -30,31 +32,33 @@ async function handler(req: NextRequest, { params }: Ctx) {
   const body =
     req.method === "GET" || req.method === "HEAD"
       ? undefined
-      : await req.text();
+      : toEnglishDigits(await req.text());
 
+  let res: Response;
   try {
-    const res = await fetch(backendUrl, { method: req.method, headers, body });
-
-    // A 204/205/304 must not carry a body — the Response constructor throws if it does.
-    if (res.status === 204 || res.status === 205 || res.status === 304) {
-      return new NextResponse(null, { status: res.status });
-    }
-
-    const text = await res.text();
-
-    return new NextResponse(text, {
-      status: res.status,
-      headers: {
-        "Content-Type": res.headers.get("Content-Type") ?? "application/json",
-      },
+    res = await fetch(backendUrl, {
+      method: req.method,
+      headers,
+      body,
+      signal: AbortSignal.timeout(10_000),
     });
-  } catch (error) {
-    console.error("Proxy route error:", error);
-    return NextResponse.json(
-      { message: "خطا در برقراری ارتباط با سرور." },
-      { status: 502 }
-    );
+  } catch {
+    return NextResponse.json({ message: "upstream_unavailable" }, { status: 504 });
   }
+
+  // A 204/205/304 must not carry a body — the Response constructor throws if it does.
+  if (res.status === 204 || res.status === 205 || res.status === 304) {
+    return new NextResponse(null, { status: res.status });
+  }
+
+  const text = await res.text();
+
+  return new NextResponse(text, {
+    status: res.status,
+    headers: {
+      "Content-Type": res.headers.get("Content-Type") ?? "application/json",
+    },
+  });
 }
 
 export { handler as GET, handler as POST, handler as PATCH, handler as PUT, handler as DELETE };
