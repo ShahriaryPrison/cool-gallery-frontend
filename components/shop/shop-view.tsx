@@ -18,21 +18,17 @@ import { Switch } from "@/components/ui/switch";
 import { PRICE_BANDS, type Product } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const SORTS = [
-  { key: "new", label: "جدیدترین" },
-  { key: "cheap", label: "ارزان‌ترین" },
-  { key: "exp", label: "گران‌ترین" },
-  { key: "pop", label: "محبوب‌ترین" },
-] as const;
-
-type SortKey = (typeof SORTS)[number]["key"];
+import { PRODUCT_SORTS, PRODUCT_SORT_LABELS, type ProductSort } from "@/lib/productSort";
 
 interface ShopViewProps {
   title: string;
   /** The category's intro text from its SEO settings, shown under the title. */
   intro?: string | null;
   initialQuery?: string;
+  /** The listing's order; the API sorts the whole listing, not just this page. */
+  sort: ProductSort;
+  /** Where each order lives: the same listing at page 1 with `?sort=`. */
+  sortHref: Record<ProductSort, string>;
   products?: Product[];
   /** Products in the whole listing, across its pages. */
   total: number;
@@ -45,6 +41,8 @@ export function ShopView({
   title,
   intro,
   initialQuery = "",
+  sort,
+  sortHref,
   products = [],
   total,
   categoryLinks,
@@ -52,7 +50,6 @@ export function ShopView({
 }: ShopViewProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [sort, setSort] = useState<SortKey>("new");
   const [band, setBand] = useState("all");
   const [onlyOff, setOnlyOff] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -61,7 +58,7 @@ export function ShopView({
     const bandDef = PRICE_BANDS.find((b) => b.key === band) || PRICE_BANDS[0];
     const q = query.trim().toLowerCase();
 
-    const filtered = products.filter((p) => {
+    return products.filter((p) => {
       const matchQuery =
         !q ||
         p.name.toLowerCase().includes(q) ||
@@ -72,16 +69,7 @@ export function ShopView({
 
       return matchQuery && matchPrice && matchDiscount;
     });
-
-    const sorters: Record<SortKey, (a: Product, b: Product) => number> = {
-      new: (a, b) => products.indexOf(a) - products.indexOf(b),
-      cheap: (a, b) => a.price - b.price,
-      exp: (a, b) => b.price - a.price,
-      pop: (a, b) => (b.popularity || 0) - (a.popularity || 0),
-    };
-
-    return [...filtered].sort(sorters[sort]);
-  }, [products, query, sort, band, onlyOff]);
+  }, [products, query, band, onlyOff]);
 
   const activeFilters = band !== "all" || onlyOff;
   // Narrowed on this page only: until then the count is the whole listing's.
@@ -174,16 +162,16 @@ export function ShopView({
         </motion.button>
 
         <div className="w-[150px] sm:w-[180px]">
-          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <Select value={sort} onValueChange={(v) => router.push(sortHref[v as ProductSort])}>
             <SelectTrigger className="glass !h-auto w-full rounded-2xl border-transparent px-3.5 py-2.5 text-[12.5px]">
               <SelectValue>
-                {(value: SortKey) => SORTS.find((s) => s.key === value)?.label}
+                {(value: ProductSort) => PRODUCT_SORT_LABELS[value]}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="glass-panel rounded-2xl">
-              {SORTS.map((s) => (
-                <SelectItem key={s.key} value={s.key} className="rounded-xl text-[12.5px]">
-                  {s.label}
+              {PRODUCT_SORTS.map((s) => (
+                <SelectItem key={s} value={s} className="rounded-xl text-[12.5px]">
+                  {PRODUCT_SORT_LABELS[s]}
                 </SelectItem>
               ))}
             </SelectContent>

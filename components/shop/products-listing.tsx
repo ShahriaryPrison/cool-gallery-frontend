@@ -12,24 +12,25 @@ import {
   storeBaseUrl,
 } from "@/lib/seo";
 import type { Category } from "@/lib/types";
+import { PRODUCT_SORTS, withSort, type ProductSort } from "@/lib/productSort";
 
 /**
  * The products listing behind `/products` (all products, ?search=) and the clean category
  * address `/category/{slug}` — the same two addresses, titles and canonicals as the old
  * storefront template. Paging is `?page=N` on both; page 1 is the bare address.
  */
-export type ListingParams = { page?: string; search?: string; category?: Category | null };
+export type ListingParams = { page?: string; search?: string; category?: Category | null; sort?: ProductSort };
 
 const pageOf = (sp: ListingParams) => (sp.search ? 1 : Math.max(1, Number(sp.page) || 1));
 
-/** `/products` or `/category/{slug}` at `page`, keeping a search. */
-function listingHref(sp: ListingParams, page: number): string {
-  if (sp.category) return categoryPath(sp.category, { page });
+/** `/products` or `/category/{slug}` at `page`, keeping a search and the sort. */
+function listingHref(sp: ListingParams, page: number, sort = sp.sort): string {
+  if (sp.category) return withSort(categoryPath(sp.category, { page }), sort);
   const qs = new URLSearchParams();
   if (sp.search) qs.set("search", sp.search);
   if (page > 1) qs.set("page", String(page));
   const query = qs.toString();
-  return `/products${query ? `?${query}` : ""}`;
+  return withSort(`/products${query ? `?${query}` : ""}`, sort);
 }
 
 export async function productsListingMetadata(sp: ListingParams): Promise<Metadata> {
@@ -66,7 +67,7 @@ export async function productsListingMetadata(sp: ListingParams): Promise<Metada
 export async function ProductsListing({ sp }: { sp: ListingParams }) {
   const page = pageOf(sp);
   const [productsRes, categoriesRes, site] = await Promise.all([
-    getProducts(undefined, { page, category_id: sp.category?.id, search: sp.search }).catch(() => null),
+    getProducts(undefined, { page, category_id: sp.category?.id, search: sp.search, sort: sp.sort }).catch(() => null),
     getCategories().catch(() => null),
     getSite().catch(() => null),
   ]);
@@ -96,10 +97,13 @@ export async function ProductsListing({ sp }: { sp: ListingParams }) {
         />
       )}
       <ShopView
-        key={`${sp.category?.slug ?? "all"}-${sp.search ?? ""}-${page}`}
+        key={`${sp.category?.slug ?? "all"}-${sp.search ?? ""}-${page}-${sp.sort ?? ""}`}
         title={sp.category ? sp.category.name : sp.search ? `نتایج «${sp.search}»` : "همه محصولات"}
         intro={sp.category && !sp.search ? sp.category.seo?.intro ?? null : null}
         initialQuery={sp.search ?? ""}
+        sort={sp.sort ?? "newest"}
+        // A new order starts again from page 1.
+        sortHref={Object.fromEntries(PRODUCT_SORTS.map((s) => [s, listingHref(sp, 1, s)])) as Record<ProductSort, string>}
         products={products}
         total={productsRes?.meta?.total ?? products.length}
         categoryLinks={[

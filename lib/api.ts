@@ -10,6 +10,7 @@ import type {
   SiteConfig,
 } from "./types";
 import type { Product } from "./data";
+import type { ProductSort } from "./productSort";
 
 export const API_BASE =
   process.env.AVVAL_API_URL ||
@@ -98,7 +99,7 @@ export async function getProducts(
     page?: number;
     category_id?: number;
     search?: string;
-    sort?: "price" | "-price" | "newest";
+    sort?: ProductSort;
   } = {}
 ): Promise<Paginated<ProductSummary>> {
   const qs = new URLSearchParams();

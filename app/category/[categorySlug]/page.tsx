@@ -4,6 +4,7 @@ import { ProductsListing, productsListingMetadata } from "@/components/shop/prod
 import { getCategories, getCategoryRedirect } from "@/lib/api";
 import { categoryPath, findCategoryBySlug } from "@/lib/seo";
 import type { Category } from "@/lib/types";
+import { parseProductSort, withSort } from "@/lib/productSort";
 
 /* `/category/{slug}`: a category's products at the old template's clean address. Paging comes
    from the query string, so it renders per request. */
@@ -11,14 +12,14 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ categorySlug: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; sort?: string }>;
 };
 
-async function resolve({ params, searchParams }: Props): Promise<{ category: Category; page?: string }> {
-  const [{ categorySlug }, { page }] = await Promise.all([params, searchParams]);
+async function resolve({ params, searchParams }: Props): Promise<{ category: Category; page?: string; sort?: string }> {
+  const [{ categorySlug }, { page, sort }] = await Promise.all([params, searchParams]);
   const { data: categories } = await getCategories();
   const category = findCategoryBySlug(categories, categorySlug);
-  if (category) return { category, page };
+  if (category) return { category, page, sort };
 
   // An earlier slug of a renamed category moves for good to its current address; anything else is a 404.
   let oldSlug = categorySlug;
@@ -29,7 +30,7 @@ async function resolve({ params, searchParams }: Props): Promise<{ category: Cat
   }
   const current = await getCategoryRedirect(undefined, oldSlug).catch(() => null);
   if (!current) notFound();
-  permanentRedirect(categoryPath({ slug: current }, { page }));
+  permanentRedirect(withSort(categoryPath({ slug: current }, { page }), parseProductSort(sort)));
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -38,6 +39,6 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage(props: Props) {
-  const { category, page } = await resolve(props);
-  return <ProductsListing sp={{ category, page }} />;
+  const { category, page, sort } = await resolve(props);
+  return <ProductsListing sp={{ category, page, sort: parseProductSort(sort) }} />;
 }
