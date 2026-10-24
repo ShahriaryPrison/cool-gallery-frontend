@@ -13,7 +13,7 @@ import React, {
 import { toast } from "sonner";
 import { DEFAULT_STORE_SLUG, irrToToman } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { FREE_SHIPPING_THRESHOLD, type Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
 import { CATALOG_ONLY_MESSAGE, useSiteFeatures } from "@/components/site-features";
 import type { ProductSummary } from "@/lib/types";
 
@@ -477,4 +477,3 @@ export function cartNoticeLabel(notice: CartNotice | undefined): string | null {
   return "دیگر در دسترس نیست — در سفارش حساب نمی‌شود";
 }
 
-export { FREE_SHIPPING_THRESHOLD };

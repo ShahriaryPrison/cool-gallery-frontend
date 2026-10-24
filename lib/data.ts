@@ -399,32 +399,6 @@ export const PRICE_BANDS: PriceBand[] = [
   { key: "c", label: "بالای ۶۰۰ هزار تومان", lo: 600000, hi: Infinity },
 ];
 
-export interface ShippingOption {
-  key: string;
-  label: string;
-  cost: number;
-}
-
-export const SHIPPING_OPTIONS: ShippingOption[] = [
-  { key: "post", label: "پست پیشتاز (سراسر کشور)", cost: 55000 },
-  { key: "tip", label: "تیپاکس (تحویل ۱ تا ۲ روزه)", cost: 85000 },
-  { key: "exp", label: "پیک فوری تهران (تحویل همان روز)", cost: 110000 },
-];
-
-export interface PaymentOption {
-  key: string;
-  label: string;
-}
-
-export const PAYMENT_OPTIONS: PaymentOption[] = [
-  { key: "gate", label: "پرداخت آنلاین (شتاب)" },
-  { key: "card", label: "کارت به کارت" },
-];
-
-export const FREE_SHIPPING_THRESHOLD = 700000;
-export const DISCOUNT_CODE = "COOL30";
-export const DISCOUNT_RATE = 0.3;
-
 export function getProductById(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
