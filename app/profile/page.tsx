@@ -21,12 +21,15 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
+import { useSiteFeatures } from "@/components/site-features";
 import { formatIrrAsToman } from "@/lib/api";
 import { toFaDigits } from "@/lib/format";
 import type { ClubDashboard, ClubReward, CustomerCoupon, CustomerOrder } from "@/lib/types";
 
 export default function AccountPage() {
   const auth = useAuth();
+  // The club (points, rewards, referrals) only when the store runs one.
+  const { loyalty } = useSiteFeatures();
   const [activeTab, setActiveTab] = useState<"orders" | "club" | "profile">("orders");
 
   // Orders State
@@ -68,7 +71,7 @@ export default function AccountPage() {
 
   // Load club when club tab active
   useEffect(() => {
-    if (auth.token && activeTab === "club") {
+    if (auth.token && loyalty && activeTab === "club") {
       setClubLoading(true);
       Promise.all([
         auth.fetchClubDashboard(),
@@ -151,7 +154,9 @@ export default function AccountPage() {
           </div>
           <h1 className="text-[22px] font-black text-white mt-5">ورود به حساب کاربری</h1>
           <p className="text-ink-3 text-[13px] mt-2 max-w-[360px] mx-auto leading-relaxed">
-            برای پیگیری سفارش‌ها، مشاهده کدهای تخفیف و امتیازات باشگاه مشتریان وارد شوید.
+            {loyalty
+              ? "برای پیگیری سفارش‌ها، مشاهده کدهای تخفیف و امتیازات باشگاه مشتریان وارد شوید."
+              : "برای پیگیری سفارش‌ها و ویرایش اطلاعات حساب وارد شوید."}
           </p>
 
           <motion.button
@@ -210,7 +215,7 @@ export default function AccountPage() {
         <div className="mt-6 flex gap-2 border-t border-white/8 pt-5 overflow-x-auto no-scrollbar">
           {[
             { key: "orders", label: "سفارش‌های من", icon: Package },
-            { key: "club", label: "باشگاه مشتریان و پاداش‌ها", icon: Sparkles },
+            ...(loyalty ? [{ key: "club", label: "باشگاه مشتریان و پاداش‌ها", icon: Sparkles }] : []),
             { key: "profile", label: "ویرایش پروفایل", icon: Edit3 },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -294,7 +299,7 @@ export default function AccountPage() {
         )}
 
         {/* TAB 2: CLUB & LOYALTY */}
-        {activeTab === "club" && (
+        {loyalty && activeTab === "club" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             {clubLoading ? (
               <div className="py-16 text-center text-ink-4 text-[13px]">در حال دریافت اطلاعات باشگاه...</div>
