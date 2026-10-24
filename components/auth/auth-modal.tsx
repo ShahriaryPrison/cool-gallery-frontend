@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { X, Smartphone, KeyRound, ArrowLeft, RotateCcw, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toFaDigits } from "@/lib/format";
+import { toEnglishDigits } from "@/lib/digits";
 
 export function AuthModal() {
   const { isLoginOpen, closeLogin, requestOtp, verifyOtp } = useAuth();
@@ -54,7 +55,7 @@ export function AuthModal() {
     e.preventDefault();
     setError(null);
 
-    const cleanPhone = phone.trim();
+    const cleanPhone = toEnglishDigits(phone.trim().replace(/[\s-]/g, ""));
     // Validate Iranian mobile (09...)
     const iranPhoneRegex = /^09[0-9]{9}$/;
     if (!iranPhoneRegex.test(cleanPhone)) {
@@ -78,7 +79,8 @@ export function AuthModal() {
   };
 
   const handleOtpChange = (index: number, val: string) => {
-    const digit = val.slice(-1);
+    const normalized = toEnglishDigits(val);
+    const digit = normalized.slice(-1);
     const newOtp = [...otp];
     newOtp[index] = digit;
     setOtp(newOtp);
@@ -105,7 +107,9 @@ export function AuthModal() {
     try {
       setLoading(true);
       setError(null);
-      await verifyOtp(phone.trim(), code);
+      const cleanPhone = toEnglishDigits(phone.trim().replace(/[\s-]/g, ""));
+      const cleanCode = toEnglishDigits(code.trim());
+      await verifyOtp(cleanPhone, cleanCode);
     } catch (err: any) {
       setError(err.message || "کد وارد شده صحیح نمی‌باشد.");
       setOtp(["", "", "", ""]);

@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { ProductImage } from "@/components/product/product-image";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { formatToman, toFaDigits } from "@/lib/format";
+import { toEnglishDigits } from "@/lib/digits";
 
 export function CartDrawer() {
   const cart = useCart();
@@ -24,10 +25,11 @@ export function CartDrawer() {
   const { offer } = cart.offer;
 
   const submitCoupon = async () => {
-    if (couponBusy) return;
+    const clean = toEnglishDigits(couponInput.trim());
+    if (!clean || couponBusy) return;
     setCouponBusy(true);
     setCouponError(null);
-    const res = await cart.applyCoupon(couponInput);
+    const res = await cart.applyCoupon(clean);
     setCouponBusy(false);
     if (res.ok) setCouponInput("");
     else setCouponError(res.message ?? "کد تخفیف واردشده معتبر نیست.");

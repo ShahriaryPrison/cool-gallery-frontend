@@ -1,6 +1,7 @@
 'use server';
 
 import { API_BASE, DEFAULT_STORE_SLUG } from '@/lib/api';
+import { toEnglishDigitsDeep } from '@/lib/digits';
 
 export interface CheckoutShippingPayload {
   recipient_name?: string;
@@ -48,7 +49,7 @@ export async function submitCheckoutAction(
         'Idempotency-Key': idempotencyKey,
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(toEnglishDigitsDeep(payload)),
       cache: 'no-store',
     });
 

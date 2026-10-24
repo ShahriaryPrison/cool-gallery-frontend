@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFrame } from "@/components/layout/site-frame";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { Toaster } from "@/components/ui/sonner";
+import { PersianDigitInputs } from "@/components/PersianDigitInputs";
 import { getSite } from "@/lib/api";
 import { JsonLd, pageMetadata, storeBaseUrl, storeSchema } from "@/lib/seo";
 
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="bg-background text-foreground selection:bg-brand selection:text-white">
+        <PersianDigitInputs />
         {site && <JsonLd data={storeSchema(site)} />}
         <ScrollToTop />
         <CustomerAuthProvider>
