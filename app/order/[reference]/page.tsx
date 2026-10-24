@@ -21,6 +21,8 @@ import { useCart } from "@/components/cart/cart-provider";
 import { formatIrrAsToman, irrToToman } from "@/lib/api";
 import { formatToman, toFaDigits } from "@/lib/format";
 import type { OrderDetail } from "@/lib/types";
+import { TrackingCode } from "@/components/order/TrackingCode";
+import { OrderProgress } from "@/components/order/OrderProgress";
 
 export default function OrderTrackingPage() {
   const params = useParams<{ reference: string }>();
@@ -176,6 +178,26 @@ export default function OrderTrackingPage() {
         )}
       </motion.div>
 
+      {/* Order Status Milestones */}
+      <div className="mt-6">
+        <OrderProgress
+          status={order.status}
+          statusLabel={order.status_label}
+          storeStatuses={order.store_statuses}
+        />
+      </div>
+
+      {/* Courier / Postal Tracking Code */}
+      {order.tracking && order.tracking.number && (
+        <div className="mt-4">
+          <TrackingCode
+            carrier={order.tracking.carrier}
+            number={order.tracking.number}
+            url={order.tracking.url}
+          />
+        </div>
+      )}
+
       {/* Order Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         {/* Shipping Address */}
@@ -197,6 +219,12 @@ export default function OrderTrackingPage() {
               <span className="text-ink-4">استان و شهر:</span>
               <span className="text-white font-medium">{[order.shipping.province, order.shipping.city].filter(Boolean).join("، ") || "—"}</span>
             </div>
+            {order.shipping_method && (
+              <div className="flex justify-between">
+                <span className="text-ink-4">روش ارسال:</span>
+                <span className="text-white font-medium">{order.shipping_method.title}</span>
+              </div>
+            )}
             <div className="pt-2 border-t border-white/6 text-ink-2 leading-relaxed">
               <span className="text-ink-4 block text-[11px] mb-0.5">آدرس:</span>
               {order.shipping.address}

@@ -240,6 +240,8 @@ export interface OrderDetail {
     name: string;
     phone: string;
   };
+  tracking?: { carrier: string | null; number: string; url?: string | null } | null;
+  shipping_method?: { id: string | null; type: string | null; title: string; collect_on_delivery?: boolean } | null;
   shipping: {
     recipient_name?: string;
     phone?: string;
