@@ -227,6 +227,13 @@ export function CheckoutView({ site }: CheckoutViewProps) {
 
     setSubmitting(true);
     try {
+      // A new account has only a phone: save the recipient as the customer's name so the store's panel shows who bought.
+      if (!auth.customer.display_name?.trim()) {
+        await auth.updateProfile({ display_name: normalizedRecipientName }).catch((err) => {
+          console.error("Saving the customer name failed:", err);
+        });
+      }
+
       const idempotencyKey = generateUUID();
       const payload: CheckoutPayload = {
         shipping: {
