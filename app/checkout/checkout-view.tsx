@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +33,8 @@ import {
   methodsForProvince,
 } from "@/lib/checkout/shipping";
 import { resolveInitialGateway } from "@/lib/checkout/resolveInitialGateway";
+import { isAddressEmpty, toCheckoutFields, type RecentShippingAddress } from "@/lib/checkout/recentAddresses";
+import { RecentAddressChips } from "./recent-address-chips";
 import { submitCheckoutAction, type CheckoutPayload } from "./actions";
 
 // Generate UUID v4 for Idempotency-Key
@@ -103,6 +105,52 @@ export function CheckoutView({ site }: CheckoutViewProps) {
     }
   }, [auth.customer, recipientName, recipientPhone]);
 
+  // «آدرس‌های قبلی»: the logged-in buyer's past addresses in this store, fetched once per login.
+  // The newest one is filled in only while the buyer has typed nothing, so it never overwrites their input.
+  const [recentAddresses, setRecentAddresses] = useState<RecentShippingAddress[]>([]);
+  const addressTouchedRef = useRef(false);
+  const recipientTouchedRef = useRef(false);
+  const { token: authToken, fetchAddresses } = auth;
+  useEffect(() => {
+    if (!authToken) return;
+    let cancelled = false;
+    fetchAddresses().then((list) => {
+      if (!cancelled) setRecentAddresses(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // fetchAddresses is recreated each render; the token alone decides when to fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
+
+  const applySavedAddress = (saved: RecentShippingAddress, keepRecipient = false) => {
+    const f = toCheckoutFields(saved);
+    setProvince(f.province);
+    setCity(f.city);
+    setAddress(f.address);
+    setPostalCode(f.postalCode);
+    if (keepRecipient) return;
+    if (saved.recipient_name) setRecipientName(saved.recipient_name);
+    if (saved.phone) setRecipientPhone(saved.phone);
+  };
+
+  const clearAddress = () => {
+    addressTouchedRef.current = true;
+    setProvince("");
+    setCity("");
+    setAddress("");
+    setPostalCode("");
+  };
+
+  useEffect(() => {
+    if (recentAddresses.length === 0 || addressTouchedRef.current) return;
+    addressTouchedRef.current = true;
+    if (isAddressEmpty({ province, city, address, postalCode })) applySavedAddress(recentAddresses[0], recipientTouchedRef.current);
+    // Runs once, when the list arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recentAddresses]);
+
   // When province changes and selected method is not available in new province, auto-switch
   useEffect(() => {
     if (allMethods.length === 0 || methods.some((m) => m.id === methodId)) return;
@@ -117,6 +165,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
   }, [province]);
 
   const handleProvinceChange = (newProvince: string) => {
+    addressTouchedRef.current = true;
     setProvince(newProvince);
     const p = IRAN_PROVINCES.find((item) => item.name === newProvince);
     if (p && p.cities.length > 0) {
@@ -388,6 +437,13 @@ export function CheckoutView({ site }: CheckoutViewProps) {
             اطلاعات تحویل و گیرنده
           </h2>
           <div className="border-t border-white/10 mt-4 pt-5 space-y-4">
+            <RecentAddressChips
+              addresses={recentAddresses}
+              current={{ province, city, address, postalCode }}
+              onPick={(a) => { addressTouchedRef.current = true; applySavedAddress(a); }}
+              onNew={clearAddress}
+            />
+
             {/* Recipient Name */}
             <div>
               <label className="block text-xs font-medium text-white/80 mb-1.5">
@@ -396,7 +452,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
               <input
                 type="text"
                 value={recipientName}
-                onChange={(e) => setRecipientName(e.target.value)}
+                onChange={(e) => { recipientTouchedRef.current = true; setRecipientName(e.target.value); }}
                 placeholder="نام و نام خانوادگی"
                 className="w-full rounded-2xl bg-[#14141c] border border-white/10 px-4 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand"
               />
@@ -411,7 +467,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
                 type="tel"
                 dir="ltr"
                 value={recipientPhone}
-                onChange={(e) => setRecipientPhone(e.target.value)}
+                onChange={(e) => { recipientTouchedRef.current = true; setRecipientPhone(e.target.value); }}
                 placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                 className="w-full rounded-2xl bg-[#14141c] border border-white/10 px-4 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand text-right"
               />
@@ -449,7 +505,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
               <div className="relative">
                 <select
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => { addressTouchedRef.current = true; setCity(e.target.value); }}
                   disabled={!province}
                   className="w-full appearance-none rounded-2xl bg-[#14141c] border border-white/10 px-4 py-3.5 text-sm text-white outline-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand disabled:opacity-40 cursor-pointer"
                 >
@@ -474,7 +530,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
               <textarea
                 rows={3}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => { addressTouchedRef.current = true; setAddress(e.target.value); }}
                 placeholder="مثال: خیابان آزادی، کوچه مریم، پلاک ۱۰، واحد ۲"
                 className="w-full rounded-2xl bg-[#14141c] border border-white/10 p-4 text-sm text-white placeholder:text-white/30 outline-none resize-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand"
               />
@@ -490,7 +546,7 @@ export function CheckoutView({ site }: CheckoutViewProps) {
                 maxLength={10}
                 dir="ltr"
                 value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                onChange={(e) => { addressTouchedRef.current = true; setPostalCode(e.target.value); }}
                 placeholder="مثال: ۱۲۳۴۵۶۷۸۹۰"
                 className="w-full rounded-2xl bg-[#14141c] border border-white/10 px-4 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-brand/60 focus:ring-1 focus:ring-brand text-right"
               />
@@ -627,6 +683,15 @@ export function CheckoutView({ site }: CheckoutViewProps) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* The address the order goes to, right above the button: a preselected one is read before paying. */}
+        {address.trim() && (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-[#14141c] px-4 py-3 text-xs leading-relaxed text-white/70">
+            <span className="font-bold text-white">ارسال به: </span>
+            {[province, city, address].filter((v) => v.trim()).join("، ")}
+            {postalCode.trim() ? ` — کد پستی ${toFaDigits(postalCode.trim())}` : ""}
           </div>
         )}
 

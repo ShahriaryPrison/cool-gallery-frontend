@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import type { RecentShippingAddress } from "@/lib/checkout/recentAddresses";
 import { useRouter } from "next/navigation";
 import type {
   ClubDashboard,
@@ -37,6 +38,8 @@ export interface AuthContextType {
   fetchClubDashboard: () => Promise<ClubDashboard | null>;
   fetchClubRewards: () => Promise<ClubReward[]>;
   fetchClubCoupons: () => Promise<CustomerCoupon[]>;
+  /** Recent shipping addresses from this customer's past orders here (checkout chips); [] on any failure. */
+  fetchAddresses: () => Promise<RecentShippingAddress[]>;
   redeemReward: (rewardId: number) => Promise<{
     redemption_code: string;
     reward_name: string;
@@ -209,6 +212,20 @@ export function CustomerAuthProvider({
     return json.data || [];
   };
 
+  const fetchAddresses = async (): Promise<RecentShippingAddress[]> => {
+    if (!token) return [];
+    try {
+      const res = await fetch(`${proxyBase(slug)}/addresses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json?.data) ? json.data : [];
+    } catch {
+      return [];
+    }
+  };
+
   const fetchClubCoupons = async (): Promise<CustomerCoupon[]> => {
     if (!token) return [];
     const res = await fetch(`${proxyBase(slug)}/club/coupons`, {
@@ -271,6 +288,7 @@ export function CustomerAuthProvider({
         fetchClubDashboard,
         fetchClubRewards,
         fetchClubCoupons,
+        fetchAddresses,
         redeemReward,
         applyReferral,
       }}
