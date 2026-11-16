@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -17,6 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { PRICE_BANDS, type Product } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
+import { listingPath, readFilters, writeFilters } from "@/lib/listing-memory";
 import { cn } from "@/lib/utils";
 import { PRODUCT_SORTS, PRODUCT_SORT_LABELS, type ProductSort } from "@/lib/productSort";
 
@@ -53,6 +54,33 @@ export function ShopView({
   const [band, setBand] = useState("all");
   const [onlyOff, setOnlyOff] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const pillsRef = useRef<HTMLDivElement>(null);
+
+  // Back to a listing: its filters come back as they were (before the first paint, so the
+  // list isn't shown unfiltered for a moment and the scroll position lands on the right list).
+  useLayoutEffect(() => {
+    const saved = readFilters(listingPath());
+    if (!saved) return;
+    // Read from sessionStorage, which the server render can't see: it has to be set after mount.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setBand(saved.band);
+    setOnlyOff(saved.onlyOff);
+    setFiltersOpen(saved.open);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+  const remember = (next: Partial<{ band: string; onlyOff: boolean; open: boolean }>) =>
+    writeFilters(listingPath(), { band, onlyOff, open: filtersOpen, ...next });
+
+  // The pill row starts at its first end on every new page; bring the open category into view
+  // so coming back to it (or opening it) doesn't look like it jumped to the start.
+  useLayoutEffect(() => {
+    const row = pillsRef.current;
+    const active = row?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!row || !active) return;
+    const r = row.getBoundingClientRect();
+    const a = active.getBoundingClientRect();
+    row.scrollBy({ left: a.left + a.width / 2 - (r.left + r.width / 2), behavior: "instant" });
+  }, []);
 
   const items = useMemo(() => {
     const bandDef = PRICE_BANDS.find((b) => b.key === band) || PRICE_BANDS[0];
@@ -115,7 +143,7 @@ export function ShopView({
       </div>
 
       {/* Category Pills Slider */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-4 max-w-5xl mx-auto lg:flex-wrap lg:justify-center">
+      <div ref={pillsRef} className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-4 max-w-5xl mx-auto lg:flex-wrap lg:justify-center">
         {categoryLinks.map((c) => (
           <motion.div
             key={c.href}
@@ -148,7 +176,10 @@ export function ShopView({
       <div className="flex items-center justify-between gap-3 px-5 pb-5 max-w-5xl mx-auto">
         <motion.button
           type="button"
-          onClick={() => setFiltersOpen((v) => !v)}
+          onClick={() => {
+            remember({ open: !filtersOpen });
+            setFiltersOpen(!filtersOpen);
+          }}
           whileTap={{ scale: 0.94 }}
           transition={{ type: "spring", stiffness: 500, damping: 28 }}
           className={cn(
@@ -198,7 +229,10 @@ export function ShopView({
                     <motion.button
                       key={b.key}
                       type="button"
-                      onClick={() => setBand(b.key)}
+                      onClick={() => {
+                        remember({ band: b.key });
+                        setBand(b.key);
+                      }}
                       whileTap={{ scale: 0.94 }}
                       className={cn(
                         "rounded-full px-3.5 py-2 text-[12px] font-bold transition-colors",
@@ -214,7 +248,10 @@ export function ShopView({
                 <span className="text-ink-2 text-[12.5px]">فقط تخفیف‌دارها</span>
                 <Switch
                   checked={onlyOff}
-                  onCheckedChange={setOnlyOff}
+                  onCheckedChange={(v) => {
+                    remember({ onlyOff: v });
+                    setOnlyOff(v);
+                  }}
                   className="data-[state=checked]:bg-brand"
                 />
               </div>
